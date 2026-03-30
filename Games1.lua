@@ -8,7 +8,6 @@ local Window = Rayfield:CreateWindow({
    KeySystem = false
 })
 
-
 -- [[ SETTINGS ]] --
 local plr = game.Players.LocalPlayer
 local SpeedEnabled = false
