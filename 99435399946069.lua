@@ -1,1 +1,0 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/TURK2/HubScript/main/Games/106772177198260.lua"))()
