@@ -1,18 +1,27 @@
+-- [[ SHINNEN HUB | FIXED LOADER ]] --
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
-local currentId = game.PlaceId
+local currentId = tonumber(game.PlaceId) -- แปลงเป็นตัวเลขให้ชัวร์
 
--- 1. รายชื่อแมพที่อนุญาตให้เข้าใช้งาน (Whitelist)
 local MapScripts = {
-    [16281635412] = "Games1.lua",   -- แมพแรกที่คุณทำ
-    [100400297022629] = "Games2.lua",   -- แมพที่สอง (สร้างไฟล์ชื่อนี้รอไว้)
+    [16281635412] = "Games1.lua",
+    [100400297022629] = "Games2.lua",
 }
 
--- 2. ตรวจสอบไอดีแมพ
+-- ตรวจสอบว่าไอดีอยู่ในรายการไหม
 if MapScripts[currentId] then
-    -- ถ้าเข้าแมพที่ถูกต้อง ระบบจะไปดึงสคริปต์ของแมพนั้นมาใช้
-    local fileName = MapScripts[currentId]
-    loadstring(game:HttpGet(baseUrl .. fileName))()
+    local success, err = pcall(function()
+        loadstring(game:HttpGet(baseUrl .. MapScripts[currentId]))()
+    end)
+    
+    if not success then
+        -- ถ้าโหลดไฟล์ไม่ได้ (เช่น ชื่อไฟล์ผิด) ให้แจ้งเตือนแทนเตะ
+        warn("Shinnen Hub: ไม่สามารถโหลดไฟล์ " .. MapScripts[currentId] .. " ได้")
+    end
 else
-    -- 3. ถ้าเข้าแมพที่ไม่อยู่ในรายการ ให้เตะออกทันที (Kick)
-    game.Players.LocalPlayer:Kick("Shinnen Hub: แมพนี้ไม่ได้รับอนุญาตให้ใช้งานสคริปต์!")
+    -- แก้ไข: ถ้าไม่เจอไอดี ให้พิมพ์บอกใน F9 แทนการ Kick (เพื่อเช็กเลขไอดีจริง)
+    print("Your current PlaceId is: " .. tostring(currentId))
+    warn("แมพนี้ยังไม่ได้ลงทะเบียน! กรุณาก๊อปเลขด้านบนไปใส่ใน Load.lua")
+    
+    -- ถ้าอยากให้เตะเฉพาะตอนมั่นใจแล้วค่อยเปิดบรรทัดล่างนี้ครับ
+    -- game.Players.LocalPlayer:Kick("แมพนี้ไม่ได้รับอนุญาต!")
 end
