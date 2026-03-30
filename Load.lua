@@ -1,5 +1,5 @@
 -- [[ SHINNEN HUB | FIXED LOADER ]] --
-local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/Load.lua"
 local currentId = tonumber(game.PlaceId) -- แปลงเป็นตัวเลขให้ชัวร์
 
 local MapScripts = {
