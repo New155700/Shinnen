@@ -1,10 +1,10 @@
--- [[ SHINNEN HUB | FIXED LOADER ]] --
+-- [[ SHINNEN HUB | PRO LOADER ]] --
 local currentId = game.PlaceId
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 local MapScripts = {
     [85638494463963] = "Games1.lua",
-    [96255502718881] = "Games2.lua",
+    [96255502718881] = "Games2.lua", -- เช็คเลขนี้ให้ตรงกับหน้าจอที่เคยเด้ง
 }
 
 if MapScripts[currentId] then
@@ -14,12 +14,12 @@ if MapScripts[currentId] then
     end)
     
     if success and result then
-        print("Shinnen Hub: Loading " .. fileName)
+        print("Loading: " .. fileName)
         loadstring(result)()
     else
-        game.Players.LocalPlayer:Kick("Shinnen Hub: โหลดไฟล์จาก GitHub ไม่สำเร็จ!")
+        warn("Download Failed!")
     end
 else
-    -- ถ้าเลขไม่ตรง จะเด้งออกทันทีตามที่คุณต้องการ
-    game.Players.LocalPlayer:Kick("Shinnen Hub: ไม่พบไอดีแมพนี้ในระบบ (" .. tostring(currentId) .. ")")
+    -- ถ้าไอดีไม่ตรง ให้เด้งออกพร้อมบอกเลขที่ถูกต้อง
+    game:GetService("Players").LocalPlayer:Kick("ID NOT FOUND: " .. tostring(currentId))
 end
