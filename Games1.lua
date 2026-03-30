@@ -3,8 +3,8 @@ local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Win = Rayfield:CreateWindow({
     Name = "Shinnen Hub | V1 Custom",
-    LoadingTitle = "Splitting Toggles...",
-    LoadingSubtitle = "by Shinnen Custom",
+    LoadingTitle = "Splitting Toggles...👿",
+    LoadingSubtitle = "by Shinnen Custom👿",
     ConfigurationSaving = {Enabled = false},
     KeySystem = false 
 })
