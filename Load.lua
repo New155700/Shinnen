@@ -1,19 +1,24 @@
--- [[ SHINNEN HUB | 100% WORKING LOADER ]] --
-local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+-- [[ SHINNEN HUB | RECOVERY LOAD ]] --
 local currentId = game.PlaceId
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 local MapScripts = {
     [85638494463963] = "Games1.lua",
     [96255502718881] = "Games2.lua"
 }
 
-local fileName = MapScripts[currentId]
-
-if fileName then
-    -- ถ้าเจอไอดี ให้โหลดไฟล์นั้นทันที
-    loadstring(game:HttpGet(baseUrl .. fileName))()
+if MapScripts[currentId] then
+    local fileName = MapScripts[currentId]
+    local success, result = pcall(function()
+        return game:HttpGet(baseUrl .. fileName)
+    end)
+    
+    if success and result then
+        loadstring(result)()
+    else
+        warn("Shinnen Hub: Download Error!")
+    end
 else
-    -- ถ้าไม่เจอไอดี ให้บังคับโหลด Games1.lua ไปก่อน (กันเหนียว)
-    warn("ID Not Found ("..tostring(currentId).."), Force Loading Games1")
-    loadstring(game:HttpGet(baseUrl .. "Games1.lua"))()
+    -- ถ้าหาไอดีไม่เจอ ให้เด้งบอกเลขไอดีทันที (จะได้เอาเลขไปแก้ใน GitHub ได้)
+    game.Players.LocalPlayer:Kick("ID NOT FOUND: " .. tostring(currentId))
 end
