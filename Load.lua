@@ -1,17 +1,15 @@
--- [[ SHINNEN HUB | OFFICIAL LOADER ]] --
-local currentId = game.PlaceId
-local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
-
-local MapScripts = {
+local Scripts = {
     [85638494463963] = "Games1.lua",
     [96255502718881] = "Games2.lua"
 }
 
-if MapScripts[currentId] then
-    local fileName = MapScripts[currentId]
-    print("Shinnen Hub: Found Map! Loading " .. fileName)
+local currentId = game.PlaceId
+local fileName = Scripts[currentId]
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+
+if fileName then
     loadstring(game:HttpGet(baseUrl .. fileName))()
 else
-    -- ถ้าหาไอดีไม่เจอ ให้เด้งออกและบอกเลขไอดีที่หน้าจอ
-    game:GetService("Players").LocalPlayer:Kick("ID NOT FOUND: " .. tostring(currentId))
+    -- ถ้าหาไอดีไม่เจอ ให้เด้งออกและบอกเลขไอดีมาเลย จะได้แก้ถูก
+    game.Players.LocalPlayer:Kick("ID NOT FOUND: " .. tostring(currentId))
 end
