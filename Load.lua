@@ -1,6 +1,6 @@
 local Scripts = {
-    [100400297022629] = "Games1.lua",
-    [100400297022629] = "Games2.lua"
+    [85638494463963] = "Games1.lua",
+    [85638494463963] = "Games2.lua"
 }
 
 local name = Scripts[game.PlaceId]
