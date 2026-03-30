@@ -1,27 +1,37 @@
--- Shinnen Hub Success Loader (100% Fixed)
--- รายการ ID แมพที่รองรับ (ตัวอย่าง)
-local SupportedMaps = {
-    [123456789] = "Games.lua",  -- ใส่ ID แมพ และชื่อไฟล์สคริปต์
-    [987654321] = "Games1.lua"
+-- กำหนด URL หลักของ Repository คุณ
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+
+-- ตารางตรวจสอบ ID ของแมพ (PlaceId)
+-- รูปแบบ: [ID ของแมพ] = "ชื่อไฟล์ที่ต้องการรัน"
+local MapScripts = {
+    [123456789] = "Games.lua",  -- เปลี่ยน 123456789 เป็น ID แมพจริง
+    [987654321] = "Games1.lua", -- เพิ่มแมพอื่นๆ ได้ที่นี่
 }
 
-local currentPlaceId = game.PlaceId
+local currentId = game.PlaceId
 
-if SupportedMaps[currentPlaceId] then
-    -- ถ้าเจอ ID แมพในรายการ ให้ทำการโหลดสคริปต์
-    local fileName = SupportedMaps[currentPlaceId]
-    local url = "https://raw.githubusercontent.com/New155700/Shinnen/main/" .. fileName
+-- ตรวจสอบว่าแมพปัจจุบันอยู่ในรายการที่รองรับหรือไม่
+if MapScripts[currentId] then
+    local fileName = MapScripts[currentId]
+    local fullUrl = baseUrl .. fileName
     
-    local success, content = pcall(function()
-        return game:HttpGet(url)
+    -- พยายามดึงโค้ดจาก GitHub
+    local success, scriptContent = pcall(function()
+        return game:HttpGet(fullUrl)
     end)
-
-    if success then
-        loadstring(content)()
+    
+    if success and scriptContent then
+        -- รันสคริปต์ที่ดึงมาได้
+        local run, err = loadstring(scriptContent)
+        if run then
+            run()
+        else
+            warn("Error in script syntax: " .. tostring(err))
+        end
     else
-        warn("ไม่สามารถโหลดสคริปต์ได้: " .. tostring(content))
+        warn("Failed to fetch script from GitHub")
     end
 else
-    -- ถ้าแมพไม่ถูกต้อง ให้เตะออก
-    game.Players.LocalPlayer:Kick("สคริปต์นี้ไม่รองรับแมพนี้ (Unsupported Map)")
+    -- ถ้า ID แมพไม่ตรงกับที่ตั้งไว้ ให้เด้งออก (Kick)
+    game.Players.LocalPlayer:Kick("❌ แมพนี้ไม่รองรับสคริปต์ (Unsupported Map ID: " .. currentId .. ")")
 end
