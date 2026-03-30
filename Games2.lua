@@ -1,15 +1,23 @@
--- [[ SHINNEN HUB | MAIN SCRIPT ]] --
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "⚡ Shinnen Hub | All-In-One",
-   LoadingTitle = "Pro Edition Loading...",
-   LoadingSubtitle = "by Shinnen Custom",
-   ConfigurationSaving = {
-      Enabled = false
-   },
+   Name = "⚡ Shinnen Hub",
+   LoadingTitle = "Loading...",
+   LoadingSubtitle = "by Shinnen",
+   ConfigurationSaving = { Enabled = false },
    KeySystem = false
 })
+
+local Tab = Window:CreateTab("Main", 4483362458)
+
+Tab:CreateButton({
+   Name = "Test Print",
+   Callback = function()
+       print("Working!")
+   end,
+})
+
+-- คุณสามารถก๊อปฟังก์ชัน getBase หรือ Auto ต่างๆ มาวางต่อท้ายตรงนี้ได้เลย
 
 -- ส่วนของ Tab และ Function ด้านล่างก๊อปของเดิมมาต่อได้เลยครับ
 
