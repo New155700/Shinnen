@@ -3,8 +3,8 @@ local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Win = Rayfield:CreateWindow({
     Name = "Shinnen Hub | V1 Custom",
-    LoadingTitle = "Splitting Toggles...👿👿",
-    LoadingSubtitle = "by Shinnen Custom 👿👿",
+    LoadingTitle = "Splitting Toggles...",
+    LoadingSubtitle = "by Shinnen Custom",
     ConfigurationSaving = {Enabled = false},
     KeySystem = false 
 })
@@ -172,22 +172,9 @@ task.spawn(function()
                         TargetPart.Transparency = 1
                     end
                 end
-            Custom
+            end
         end)
     end
 end)
 
 Rayfield:Notify({Title = "V1 Final Updated", Content = "แยกปุ่มเปิด-ปิด Hitbox และ RGB เรียบร้อยครับ", Duration = 5})
-
-}) -- วงเล็บปิดของ Window
-
--- สร้างหน้าเมนู (Tab)
-local MainTab = Win:CreateTab("Main", 4483362458)
-
--- สร้างปุ่มทดสอบ
-MainTab:CreateButton({
-   Name = "Test Hub",
-   Callback = function()
-       print("Hub is Working!")
-   end,
-})
