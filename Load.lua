@@ -5,7 +5,7 @@ local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 -- 1. รายชื่อแมพ (เช็คตัวสะกด Games1.lua ให้ตรงกับใน GitHub)
 local MapScripts = {
-    [16281635412] = "Games1.lua",     -- แมพเก่าของคุณ
+    [85638494463963] = "Games1.lua",     -- แมพเก่าของคุณ
     [96255502718881] = "Games2.lua",  -- แมพ DUEL Warriors (เลขที่มันฟ้องว่าเด้ง)
 }
 
