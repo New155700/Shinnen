@@ -1,5 +1,5 @@
 -- กำหนด URL หลักของ Repository คุณ
-local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/987654321"
 
 -- ตารางตรวจสอบ ID ของแมพ (PlaceId)
 -- รูปแบบ: [ID ของแมพ] = "ชื่อไฟล์ที่ต้องการรัน"
