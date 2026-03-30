@@ -4,7 +4,7 @@ local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 -- 1. รายชื่อแมพ (เช็คตัวสะกด Games1.lua ให้ตรงกับใน GitHub)
 local MapScripts = {
-    [16281635412] = "Games1.lua",
+    [96255502718881] = "Games1.lua",
     [100400297022629] = "Games2.lua", 
 }
 
