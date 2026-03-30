@@ -1,19 +1,18 @@
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
-local currentId = tostring(game.PlaceId)
+local currentId = game.PlaceId
 
--- รายการแมพเฉพาะทาง (ถ้ามีไฟล์แยกแมพ)
+-- 1. รายชื่อแมพที่อนุญาตให้เข้าใช้งาน (Whitelist)
 local MapScripts = {
-    ["123456789"] = "Games.lua",
-    ["987654321"] = "Games1.lua", -- แมพที่คุณรันติด
+    [987654321] = "Games1.lua",   -- แมพแรกที่คุณทำ
+    [123456789] = "Games2.lua",   -- แมพที่สอง (สร้างไฟล์ชื่อนี้รอไว้)
 }
 
+-- 2. ตรวจสอบไอดีแมพ
 if MapScripts[currentId] then
-    -- ถ้าเจอไอดีแมพในลิสต์ ให้โหลดไฟล์เฉพาะแมพนั้น
-    loadstring(game:HttpGet(baseUrl .. MapScripts[currentId]))()
+    -- ถ้าเข้าแมพที่ถูกต้อง ระบบจะไปดึงสคริปต์ของแมพนั้นมาใช้
+    local fileName = MapScripts[currentId]
+    loadstring(game:HttpGet(baseUrl .. fileName))()
 else
-    -- ถ้าไม่เจอ (แมพอื่นๆ ทั่วไป) ให้โหลดไฟล์หลัก (Universal) แทน
-    -- คุณต้องสร้างไฟล์ชื่อ Main.lua ไว้ใน GitHub ด้วยนะครับ
-    loadstring(game:HttpGet(baseUrl .. "Main.lua"))()
-end
-.. ")")
+    -- 3. ถ้าเข้าแมพที่ไม่อยู่ในรายการ ให้เตะออกทันที (Kick)
+    game.Players.LocalPlayer:Kick("Shinnen Hub: แมพนี้ไม่ได้รับอนุญาตให้ใช้งานสคริปต์!")
 end
