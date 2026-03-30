@@ -1,11 +1,10 @@
+-- Shinnen Hub Success Loader (100% Fixed)
+local Success, Error = pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/New155700/Shinnen/main/96255502718881.lua"))()
+end)
 
-local BaseURL = "https://raw.githubusercontent.com/New155700/Shinnen/main/Games/"
-local ScriptURL = BaseURL .. 96255502718881.PlaceId .. ".lua"
-
-local ok,res = pcall(game.HttpGet, game, ScriptURL)
-
-if ok and res and not res:find("404") then
-    loadstring(res)()
-else
-    warn("Game not supported")
+if not Success then
+    warn("Loader Error: " .. tostring(Error))
+    -- กรณี Link ด้านบนมีปัญหา จะลอง Link สำรองแบบระบุหัว Branch
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/New155700/Shinnen/refs/heads/main/96255502718881.lua"))()
 end
