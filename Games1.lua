@@ -178,3 +178,16 @@ task.spawn(function()
 end)
 
 Rayfield:Notify({Title = "V1 Final Updated", Content = "แยกปุ่มเปิด-ปิด Hitbox และ RGB เรียบร้อยครับ", Duration = 5})
+
+}) -- วงเล็บปิดของ Window
+
+-- สร้างหน้าเมนู (Tab)
+local MainTab = Win:CreateTab("Main", 4483362458)
+
+-- สร้างปุ่มทดสอบ
+MainTab:CreateButton({
+   Name = "Test Hub",
+   Callback = function()
+       print("Hub is Working!")
+   end,
+})
