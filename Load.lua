@@ -1,6 +1,6 @@
 -- Shinnen Hub Success Loader (100% Fixed)
 local Success, Error = pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/New155700/Shinnen/main/Games.lua"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/New155700/Shinnen/main/Games"))()
 end)
 
 if not Success then
