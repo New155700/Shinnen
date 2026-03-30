@@ -1,180 +1,174 @@
--- [[ SHINNEN HUB | V1 ULTIMATE EDITION ]] --
--- รวม Speed, Auto E, ESP (Name/Health), Teleport Player, และ Graphics --
+-- [[ SHINNEN HUB | V61.2 HYPER-DRIVE NUCLEAR ]] --
+-- ปรับจูน: Aura ไวระดับมิลลิวินาที + ระบบ Lag ทำลายล้าง (Nuclear) --
+-- แก้ไข: เพิ่มระบบป้องกันตกแมพ + โหลดแมพไวขึ้น (ห้ามแก้ส่วนอื่น) --
 
--- 1. ลบ UI เก่า
 pcall(function()
+    _G.ShinnenActive = false
+    task.wait(0.1)
     for _, v in pairs(game.CoreGui:GetChildren()) do
-        if v.Name == "Rayfield" or v.Name == "ShinnenInfo" then v:Destroy() end
+        if v.Name == "Rayfield" then v:Destroy() end
     end
+end)
+
+-- [0] ระบบแก้ตกแมพ (Anti-Fall & Map Loader)
+task.spawn(function()
+    if not game:IsLoaded() then game.Loaded:Wait() end
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    
+    -- บังคับโหลดพื้นที่รอบตัวละคร (Streaming Optimization)
+    if plr.ReplicationFocus == nil then
+        plr.ReplicationFocus = hrp
+    end
+    
+    -- ตรวจสอบพื้นผิว: ถ้าไม่มีพื้น ให้ยึดตัวไว้กันตก
+    RunService.Heartbeat:Connect(function()
+        if _G.ShinnenActive then
+            local ray = Ray.new(hrp.Position, Vector3.new(0, -20, 0))
+            local hit = workspace:FindPartOnRay(ray, char)
+            if not hit then
+                hrp.Velocity = Vector3.new(0, 0, 0) -- หยุดแรงโน้มถ่วงชั่วคราวถ้าไม่มีพื้น
+            end
+        end
+    end)
 end)
 
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Win = Rayfield:CreateWindow({
-    Name = "Shinnen Hub | V1 MASTER",
-    LoadingTitle = "👿 System Booting...",
-    LoadingSubtitle = "by Shinnen Custom👿",
-    ConfigurationSaving = {Enabled = false},
-    KeySystem = false 
+    Name = "Shinnen Hub | V61.2 NUCLEAR",
+    LoadingTitle = "👿 Map Overclocking & Anti-Fall...",
+    LoadingSubtitle = "by New155700",
+    ConfigurationSaving = {Enabled = false}
 })
 
--- 2. ตั้งค่าตัวแปร (Global)
+-- [1] ตัวแปรระบบ (Fast-Access Global)
+_G.ShinnenActive = true
+_G.WalkSpeed = 50
+_G.AutoAura = false
+_G.AuraRange = 100
+_G.MaxReach = 500
+_G.AntiStatus = true
+_G.LagAura = false
+_G.LagPower = 2000 
+
 local plr = game.Players.LocalPlayer
-local VIM = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
 
-getgenv().Speed = 50
-getgenv().AutoE = false
-getgenv().EspEnabled = false
-getgenv().SelectedPlayer = nil
-
--- [[ ฟังก์ชันเสริม ]] --
-
--- ระบบ ESP (ชื่อ + เลือด)
-local function CreateESP(p)
-    local nameTag = Drawing.new("Text")
-    nameTag.Visible = false
-    nameTag.Color = Color3.new(1, 1, 1)
-    nameTag.Size = 16
-    nameTag.Center = true
-    nameTag.Outline = true
-
-    local connection
-    connection = game:GetService("RunService").RenderStepped:Connect(function()
-        if getgenv().EspEnabled and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("HumanoidRootPart") and p.Character.Humanoid.Health > 0 then
-            local hum = p.Character.Humanoid
-            local hrp = p.Character.HumanoidRootPart
-            local pos, onScreen = game.Workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
-
-            if onScreen then
-                nameTag.Position = Vector2.new(pos.X, pos.Y - 40)
-                nameTag.Text = string.format("%s\n[HP: %.0f/%.0f]", p.Name, hum.Health, hum.MaxHealth)
-                -- เปลี่ยนสีตามเลือด
-                nameTag.Color = hum.Health < 30 and Color3.new(1, 0, 0) or Color3.new(1, 1, 1)
-                nameTag.Visible = true
-            else
-                nameTag.Visible = false
-            end
-        else
-            nameTag.Visible = false
-            if not p.Parent or not game.CoreGui:FindFirstChild("Rayfield") then
-                nameTag:Destroy()
-                connection:Disconnect()
-            end
+-- [2] ระบบ NUCLEAR LAG (ถล่มทีมอื่น - โครงสร้างเดิม)
+local function CreateNuclearLag(p)
+    if p == plr then return end
+    task.spawn(function()
+        local att = Instance.new("Attachment")
+        local emit = Instance.new("ParticleEmitter")
+        emit.Texture = "rbxassetid://241381931"
+        emit.Size = NumberSequence.new(80, 80)
+        emit.Transparency = NumberSequence.new(0.95)
+        emit.Lifetime = NumberRange.new(0.05)
+        emit.Rate = 0
+        emit.RotSpeed = NumberRange.new(50000)
+        emit.Speed = NumberRange.new(0)
+        emit.Parent = att
+        
+        local function Attach(char)
+            local hrp = char:WaitForChild("HumanoidRootPart", 10)
+            if hrp then att.Parent = hrp end
         end
+        if p.Character then Attach(p.Character) end
+        p.CharacterAdded:Connect(Attach)
+        
+        RunService.Heartbeat:Connect(function()
+            if _G.LagAura and (p.Team ~= plr.Team or p.Team == nil) then
+                emit.Rate = _G.LagPower
+                emit.Enabled = true
+            else
+                emit.Enabled = false
+            end
+        end)
     end)
 end
 
--- สแกนผู้เล่นในเซิร์ฟเพื่อทำ ESP
-for _, v in ipairs(game.Players:GetPlayers()) do if v ~= plr then CreateESP(v) end end
-game.Players.PlayerAdded:Connect(function(v) if v ~= plr then CreateESP(v) end end)
+for _, p in pairs(game.Players:GetPlayers()) do CreateNuclearLag(p) end
+game.Players.PlayerAdded:Connect(CreateNuclearLag)
 
--- [[ LOOPS ]] --
+-- [3] ระบบ HYPER-DRIVE (Aura & Reach ไวที่สุด - โครงสร้างเดิม)
+RunService.RenderStepped:Connect(function()
+    if not _G.ShinnenActive then return end
+    pcall(function()
+        local char = plr.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
 
--- วิ่งไว
-task.spawn(function()
-    while task.wait() do
-        pcall(function()
-            if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-                plr.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = getgenv().Speed
+        if hum and _G.AntiStatus then
+            hum.PlatformStand = false
+            hum.Sit = false
+            hum.WalkSpeed = _G.WalkSpeed
+            for _, part in ipairs(char:GetChildren()) do
+                if part:IsA("BasePart") and part.Anchored then part.Anchored = false end
             end
-        end)
-    end
-end)
-
--- Prompt Instant (Hold 0 วินาที)
-task.spawn(function()
-    while task.wait(0.5) do
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then v.HoldDuration = 0 end
         end
-    end
-end)
 
--- กด E อัตโนมัติ
-task.spawn(function()
-    while task.wait(0.1) do
-        if getgenv().AutoE then
-            VIM:SendKeyEvent(true, "E", false, game)
-            VIM:SendKeyEvent(false, "E", false, game)
+        if _G.AutoAura and hrp then
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("ProximityPrompt") then
+                    v.MaxActivationDistance = _G.MaxReach
+                    v.RequiresLineOfSight = false
+                    v.HoldDuration = 0
+                    
+                    local pPos = v.Parent:IsA("BasePart") and v.Parent.Position or v.Parent:GetPivot().Position
+                    if (hrp.Position - pPos).Magnitude <= _G.AuraRange then
+                        task.spawn(function()
+                            v:InputHoldBegin()
+                            v:InputHoldEnd()
+                        end)
+                    end
+                end
+            end
         end
-    end
+    end)
 end)
 
--- [[ UI TABS ]] --
-local TabMain = Win:CreateTab("Main & Movement", 4483362458)
-local TabVisual = Win:CreateTab("Visual & ESP", 4483362458)
-local TabTeleport = Win:CreateTab("Teleport Player", 4483362458)
+-- [4] UI TABS
+local TabMain = Win:CreateTab("Main & God Mode")
+local TabExploit = Win:CreateTab("💀 Exploits")
 
--- MAIN TAB
+TabMain:CreateSection("⚡ Movement & Status")
 TabMain:CreateInput({
-    Name = "⚡ ปรับความเร็ว (Speed)",
+    Name = "⚡ Speed",
     PlaceholderText = "50",
-    Callback = function(v)
-        local n = tonumber(v)
-        if n then getgenv().Speed = n end
-    end
+    Callback = function(v) _G.WalkSpeed = tonumber(v) or 50 end
 })
 
 TabMain:CreateToggle({
-    Name = "⌨️ เปิด/ปิด Auto E รัว",
+    Name = "🛡️ ปลดสถานะติดบัค/มึน (Anti-Status)",
+    CurrentValue = true,
+    Callback = function(v) _G.AntiStatus = v end
+})
+
+TabMain:CreateSection("⭕ Reach & Aura")
+TabMain:CreateToggle({
+    Name = "⭕ เปิด Auto Aura (ไวระดับแสง)",
     CurrentValue = false,
-    Callback = function(v) getgenv().AutoE = v end
+    Callback = function(v) _G.AutoAura = v end
 })
 
--- VISUAL TAB
-TabVisual:CreateToggle({
-    Name = "👁️ เปิดระบบมอง (ESP Name/Health)",
+TabMain:CreateInput({
+    Name = "📏 ระยะขยายปุ่ม (Reach Distance)",
+    PlaceholderText = "ใส่ตัวเลขระยะ",
+    Callback = function(v) _G.MaxReach = tonumber(v) or 500 end
+})
+
+TabExploit:CreateSection("💀 Nuclear Lag (คนอื่นค้าง)")
+TabExploit:CreateToggle({
+    Name = "💀 เปิด Nuclear Lag (ถล่มทีมอื่น)",
     CurrentValue = false,
-    Callback = function(v) getgenv().EspEnabled = v end
+    Callback = function(v) _G.LagAura = v end
 })
 
-TabVisual:CreateSection("Graphics")
-TabVisual:CreateButton({
-    Name = "✨ เปิดภาพสวย (Full Bright/Shadows)",
-    Callback = function()
-        local L = game:GetService("Lighting")
-        L.Brightness = 2.5
-        L.GlobalShadows = true
-        L.ClockTime = 14
-    end
+TabExploit:CreateInput({
+    Name = "☢️ Nuclear Power",
+    PlaceholderText = "ใส่ค่าความแรง",
+    Callback = function(v) _G.LagPower = tonumber(v) or 1000 end
 })
 
-TabVisual:CreateSlider({
-    Name = "🚀 ปลดล็อก FPS",
-    Range = {60, 360},
-    Increment = 10,
-    CurrentValue = 60,
-    Callback = function(v) setfpscap(v) end
-})
-
--- TELEPORT TAB
-TabTeleport:CreateInput({
-    Name = "🔍 ค้นหาชื่อผู้เล่น (พิมพ์ชื่อ)",
-    PlaceholderText = "พิมพ์ชื่อที่นี่...",
-    Callback = function(v)
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if string.find(p.Name:lower(), v:lower()) or string.find(p.DisplayName:lower(), v:lower()) then
-                getgenv().SelectedPlayer = p.Name
-                Rayfield:Notify({Title = "พบผู้เล่น!", Content = "เลือก: " .. p.Name, Duration = 3})
-                break
-            end
-        end
-    end
-})
-
-TabTeleport:CreateButton({
-    Name = "📍 วาร์ปไปหาผู้เล่นที่เลือก",
-    Callback = function()
-        if getgenv().SelectedPlayer then
-            local target = game.Players:FindFirstChild(getgenv().SelectedPlayer)
-            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                plr.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-            else
-                Rayfield:Notify({Title = "Error", Content = "ไม่พบตัวละครของผู้เล่น", Duration = 3})
-            end
-        else
-            Rayfield:Notify({Title = "Error", Content = "กรุณาค้นหาชื่อผู้เล่นก่อน", Duration = 3})
-        end
-    end
-})
-
-Rayfield:Notify({Title = "V41 READY", Content = "ระบบทั้งหมดพร้อมใช้งานแล้ว!", Duration = 5})
+Rayfield:Notify({Title = "V61.2 READY", Content = "Anti-Fall & Loader Active!", Duration = 5})
