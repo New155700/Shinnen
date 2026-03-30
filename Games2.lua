@@ -1,10 +1,3 @@
--- ลบ UI
-pcall(function()
-	for _,v in pairs(game.CoreGui:GetChildren()) do
-		if v.Name=="Rayfield" then v:Destroy() end
-	end
-end)
-
 local Rayfield=loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Win=Rayfield:CreateWindow({Name="⚡ Shinnen Hub | All-In-One",ConfigurationSaving={Enabled=false}})
 
