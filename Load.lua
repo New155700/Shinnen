@@ -1,25 +1,24 @@
--- [[ SHINNEN HUB | PRO LOADER ]] --
-local currentId = game.PlaceId
-local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+-- [[ SHINNEN HUB | FINAL DEBUG ]] --
+print("Starting Shinnen Hub...")
 
-local MapScripts = {
-    [85638494463963] = "Games1.lua",
-    [96255502718881] = "Games2.lua", -- เช็คเลขนี้ให้ตรงกับหน้าจอที่เคยเด้ง
-}
+local success, result = pcall(function()
+    local currentId = game.PlaceId
+    local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+    local MapScripts = {
+        [85638494463963] = "Games1.lua",
+        [96255502718881] = "Games2.lua",
+    }
 
-if MapScripts[currentId] then
-    local fileName = MapScripts[currentId]
-    local success, result = pcall(function()
-        return game:HttpGet(baseUrl .. fileName)
-    end)
-    
-    if success and result then
-        print("Loading: " .. fileName)
-        loadstring(result)()
+    if MapScripts[currentId] then
+        local fileName = MapScripts[currentId]
+        print("Found Map! Loading: " .. fileName)
+        loadstring(game:HttpGet(baseUrl .. fileName))()
     else
-        warn("Download Failed!")
+        game.Players.LocalPlayer:Kick("ID NOT FOUND: " .. tostring(currentId))
     end
-else
-    -- ถ้าไอดีไม่ตรง ให้เด้งออกพร้อมบอกเลขที่ถูกต้อง
-    game:GetService("Players").LocalPlayer:Kick("ID NOT FOUND: " .. tostring(currentId))
+end)
+
+if not success then
+    print("FATAL ERROR: " .. tostring(result))
+    warn("สคริปต์พังเพราะ: " .. tostring(result))
 end
