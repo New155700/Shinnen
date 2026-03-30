@@ -1,5 +1,17 @@
-local Rayfield=loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-local Win=Rayfield:CreateWindow({Name="⚡ Shinnen Hub | All-In-One",ConfigurationSaving={Enabled=false}})
+-- [[ SHINNEN HUB | MAIN SCRIPT ]] --
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "⚡ Shinnen Hub | All-In-One",
+   LoadingTitle = "Pro Edition Loading...",
+   LoadingSubtitle = "by Shinnen Custom",
+   ConfigurationSaving = {
+      Enabled = false
+   },
+   KeySystem = false
+})
+
+-- ส่วนของ Tab และ Function ด้านล่างก๊อปของเดิมมาต่อได้เลยครับ
 
 local plr=game.Players.LocalPlayer
 getgenv().AutoBuy=false
