@@ -1,32 +1,39 @@
--- [[ SHINNEN HUB | DUAL-MAP MASTER LOADER ]] --
--- GitHub: New155700 / Repo: Shinnen
+-- [[ SHINNEN HUB | SECURE MASTER LOADER V4 ]] --
+-- ระบบตรวจสอบไอดีแมพ: ถ้าไม่ตรงในลิสต์ "เตะออกทันที" --
 
 local currentId = tostring(game.PlaceId)
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
--- [1] รายชื่อไอดีแมพ (ใส่ไอดีเกมของคุณตรงนี้)
+-- [1] รายชื่อไอดีแมพที่อนุญาต (Whitelist)
 local MapConfig = {
-    ["100400297022629"] = "Games1.lua", -- เปลี่ยนเลขไอดีให้ตรงกับแมพที่ 1
-    ["96255502718881"]  = "Games2.lua"  -- เปลี่ยนเลขไอดีให้ตรงกับแมพที่ 2
+    ["100400297022629"] = "Games1.lua", -- แมพที่ 1
+    ["96255502718881"]  = "Games2.lua", -- แมพที่ 2
+    ["14469379009"]     = "Games3.lua"  -- แมพที่ 3
 }
 
--- [2] ระบบล้าง UI เก่า (กันบัคเมนูซ้อน)
+-- [2] ระบบตรวจสอบความถูกต้อง (Security Check)
+local fileName = MapConfig[currentId]
+
+if not fileName then
+    -- ถ้าไอดีแมพไม่ตรงกับที่ตั้งไว้ ให้ทำการ "เตะ" ทันที
+    local kickMessage = "\n👿 SHINNEN HUB SECURITY 👿\n\nขออภัย! สคริปต์นี้ไม่รองรับแมพนี้\nID: " .. currentId .. "\nกรุณาเข้าเล่นในแมพที่กำหนดเท่านั้น"
+    game.Players.LocalPlayer:Kick(kickMessage)
+    return -- หยุดการทำงานของสคริปต์ทั้งหมด
+end
+
+-- [3] ระบบล้าง UI เก่า (กรณีรันซ้ำในแมพที่ถูกต้อง)
 pcall(function()
-    if game.CoreGui:FindFirstChild("Rayfield") then game.CoreGui.Rayfield:Destroy() end
-    if game.CoreGui:FindFirstChild("ShinnenInfo") then game.CoreGui.ShinnenInfo:Destroy() end
+    for _, v in pairs(game.CoreGui:GetChildren()) do
+        if v.Name == "Rayfield" then v:Destroy() end
+    end
 end)
 
--- [3] ค้นหาไฟล์ที่ต้องโหลด
-local fileName = MapConfig[currentId] or "Games1.lua" -- ถ้าไม่เจอไอดีแมพ ให้โหลด Games1 เป็นตัวหลัก
-
--- [4] ฟังก์ชันดึงข้อมูลจาก Cloud
-local function ExecuteCloudScript()
-    -- เพิ่ม ?t= สุ่มเวลา เพื่อป้องกัน GitHub จำ Cache เก่า (สำคัญมากสำหรับการอัปเดต)
+-- [4] ฟังก์ชันโหลดโค้ดจาก Cloud (แบบสดใหม่เสมอ)
+local function LoadShinnenCloud()
     local finalUrl = baseUrl .. fileName .. "?t=" .. os.time()
     
-    print("👿 Shinnen Hub: Detecting Map ID [" .. currentId .. "]")
-    print("👿 Shinnen Hub: Loading -> " .. fileName)
-
+    print("👿 Shinnen Hub: Authorized Access [Map: " .. currentId .. "]")
+    
     local success, content = pcall(function() 
         return game:HttpGet(finalUrl) 
     end)
@@ -34,15 +41,15 @@ local function ExecuteCloudScript()
     if success and content then
         local func, err = loadstring(content)
         if func then
-            -- เริ่มทำงานสคริปต์
-            func() 
+            func() -- รันสคริปต์หลักจาก GitHub
+            print("👿 Shinnen Hub: Script Loaded!")
         else
-            warn("👿 Shinnen Hub: Script Error in " .. fileName .. " -> " .. tostring(err))
+            warn("👿 Shinnen Hub: Script Error -> " .. tostring(err))
         end
     else
-        warn("👿 Shinnen Hub: Connection Fail! (404 or Internet Issue)")
+        warn("👿 Shinnen Hub: Connection Fail!")
     end
 end
 
 -- เริ่มการทำงาน
-ExecuteCloudScript()
+LoadShinnenCloud()
