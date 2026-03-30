@@ -1,5 +1,5 @@
 -- [[ SHINNEN HUB | THE REAL LOADER ]] --
-local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/Load.lua"
 local currentId = game.PlaceId
 
 -- 1. รายชื่อแมพ (ต้องระบุว่า ID นี้ ให้ไปเปิดไฟล์ชื่ออะไร)
