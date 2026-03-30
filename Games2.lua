@@ -1,13 +1,14 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
-local Window = Rayfield:CreateWindow({
-   Name = "⚡ Shinnen Hub",
-   LoadingTitle = "Loading...",
-   LoadingSubtitle = "by Shinnen",
-   ConfigurationSaving = { Enabled = false },
-   KeySystem = false
+local Win = Rayfield:CreateWindow({
+    Name = "Shinnen Hub | V1 Custom",
+    LoadingTitle = "Splitting Toggles...🌼🌼",
+    LoadingSubtitle = "by Shinnen Custom 🌼🌼",
+    ConfigurationSaving = {Enabled = false},
+    KeySystem = false 
 })
 
+-- [[ SETTINGS ]] --
 local plr=game.Players.LocalPlayer
 getgenv().AutoBuy=false
 getgenv().AutoLock=false
