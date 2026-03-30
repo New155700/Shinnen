@@ -8,8 +8,6 @@ local Window = Rayfield:CreateWindow({
    KeySystem = false
 })
 
--- ส่วนของ Tab และ Function ด้านล่างก๊อปของเดิมมาต่อได้เลยครับ
-
 local plr=game.Players.LocalPlayer
 getgenv().AutoBuy=false
 getgenv().AutoLock=false
