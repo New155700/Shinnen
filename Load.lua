@@ -1,16 +1,25 @@
+-- [[ SHINNEN HUB | FIXED LOADER ]] --
 local currentId = game.PlaceId
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 local MapScripts = {
-    [85638494463963] = "Games1.lua", -- แมพเก่า
-    [96255502718881] = "Games2.lua", -- แมพ DUEL Warriors (เลขจากรูป 5165)
+    [85638494463963] = "Games1.lua",
+    [96255502718881] = "Games2.lua",
 }
 
 if MapScripts[currentId] then
     local fileName = MapScripts[currentId]
-    loadstring(game:HttpGet(baseUrl .. fileName))()
+    local success, result = pcall(function()
+        return game:HttpGet(baseUrl .. fileName)
+    end)
+    
+    if success and result then
+        print("Shinnen Hub: Loading " .. fileName)
+        loadstring(result)()
+    else
+        game.Players.LocalPlayer:Kick("Shinnen Hub: โหลดไฟล์จาก GitHub ไม่สำเร็จ!")
+    end
 else
-    -- ถ้าไม่เจอไอดี ไม่ต้องเตะ! ให้มันบอกเลขมาเลยจะได้แก้ถูก
-    warn("Shinnen Hub: ไม่พบไอดีนี้ -> " .. tostring(currentId))
+    -- ถ้าเลขไม่ตรง จะเด้งออกทันทีตามที่คุณต้องการ
+    game.Players.LocalPlayer:Kick("Shinnen Hub: ไม่พบไอดีแมพนี้ในระบบ (" .. tostring(currentId) .. ")")
 end
-nd
