@@ -1,21 +1,22 @@
--- [[ SHINNEN HUB | THE ONLY WORKING LOADER ]] --
+-- [[ SHINNEN HUB | RE-FIXED LOADER ]] --
 local currentId = game.PlaceId
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
--- 1. ตั้งค่าชื่อไฟล์ให้ตรงกับใน GitHub เป๊ะๆ (ตัว G ใหญ่)
+-- 1. รายชื่อแมพ (เช็คตัวสะกด Games1.lua ให้ตรงกับใน GitHub)
 local MapScripts = {
     [16281635412] = "Games1.lua",
-    [100400297022629] = "Games2.lua",
+    [100400297022629] = "Games2.lua", 
 }
 
--- 2. เช็คไอดีแมพ
+-- 2. ระบบดึงไฟล์
 if MapScripts[currentId] then
     local fileName = MapScripts[currentId]
-    -- ใช้ลิงก์ตรงแบบ GitHub Raw ห้ามแก้บรรทัดนี้
-    local url = "https://raw.githubusercontent.com/New155700/Shinnen/main/" .. fileName
+    -- ลิงก์ที่ถูกต้องคือ baseUrl ต่อด้วยชื่อไฟล์
+    local finalUrl = baseUrl .. fileName
     
-    -- สั่งโหลดและรัน
-    loadstring(game:HttpGet(url))()
+    -- รันสคริปต์
+    loadstring(game:HttpGet(finalUrl))()
 else
-    -- ถ้าไม่เจอไอดี ให้เตะออกตามความต้องการเดิมของคุณ
-    game.Players.LocalPlayer:Kick("Shinnen Hub: ID " .. tostring(currentId) .. " ยังไม่ได้ลงทะเบียน!")
+    -- ถ้าหาไอดีไม่เจอ ให้เตะออก (ตามที่คุณต้องการ)
+    game.Players.LocalPlayer:Kick("Shinnen Hub: ไม่พบไอดีแมพนี้ (" .. tostring(currentId) .. ")")
 end
