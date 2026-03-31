@@ -5,15 +5,23 @@ pcall(function()
 	end
 end)
 
-local Rayfield=loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-local Win=Rayfield:CreateWindow({Name="⚡by Shinnen Hub ",ConfigurationSaving={Enabled=false}})
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local Win = Rayfield:CreateWindow({Name="⚡by Shinnen Hub ",ConfigurationSaving={Enabled=false}})
 
-local plr=game.Players.LocalPlayer
-getgenv().AutoBuy=false
-getgenv().AutoLock=false
-getgenv().AutoBrainrots=false
-getgenv().Ranks={}
-getgenv().Speed=16
+local plr = game.Players.LocalPlayer
+getgenv().AutoBuy = false
+getgenv().AutoLock = false
+getgenv().AutoBrainrots = false
+getgenv().AutoLockGate = false -- ตัวแปรใหม่สำหรับล็อกประตู
+getgenv().Ranks = {}
+getgenv().Speed = 16
+
+-- [NEW] ระบบ Anti-AFK (รันทันที)
+local VirtualUser = game:GetService("VirtualUser")
+plr.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
 
 -- หา Base
 local function getBase()
@@ -29,6 +37,28 @@ local function getBase()
 		end
 	end
 end
+
+-- [NEW] ระบบ Auto Lock Gate (ล็อกประตูอัตโนมัติ)
+task.spawn(function()
+    while task.wait(1) do
+        if getgenv().AutoLockGate then
+            local b = getBase()
+            if b and b:FindFirstChild("Gate") and b.Gate:FindFirstChild("MainGate") then
+                local gate = b.Gate.MainGate
+                -- ตรวจสอบว่าประตูเปิดอยู่หรือไม่ (เช็คจาก CanCollide หรือสถานะในแมพ)
+                if gate.CanCollide == false or gate.Transparency > 0 then
+                    -- ส่งสัญญาณล็อกประตู (อ้างอิงจาก Remote เดิมของแมพ)
+                    pcall(function()
+                        game:GetService("ReplicatedStorage")
+                        :WaitForChild("ncxyzero_bridgenet2-fork@1.1.5")
+                        :WaitForChild("dataRemoteEvent")
+                        :FireServer({"LockGate", true}) -- ปรับเปลี่ยนตาม Remote จริงของแมพถ้าชื่อต่างออกไป
+                    end)
+                end
+            end
+        end
+    end
+end)
 
 -- ⚡ Prompt instant
 task.spawn(function()
@@ -181,6 +211,7 @@ auto:CreateInput({
 auto:CreateToggle({Name="🧠 Auto Collect",Callback=function(v)getgenv().AutoBrainrots=v end})
 auto:CreateToggle({Name="🛒 Auto Buy",Callback=function(v)getgenv().AutoBuy=v end})
 auto:CreateToggle({Name="🔒 Auto Lock (วาปไป-กลับ)",Callback=function(v)getgenv().AutoLock=v end})
+auto:CreateToggle({Name="🚪 Auto Lock Gate (ล็อกประตู)",Callback=function(v)getgenv().AutoLockGate=v end})
 
 auto:CreateButton({Name="🗑️ ลบ Gate+Plot",Callback=clearMap})
 
