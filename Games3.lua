@@ -1,174 +1,283 @@
--- [[ SHINNEN HUB | V61.2 HYPER-DRIVE NUCLEAR ]] --
--- ปรับจูน: Aura ไวระดับมิลลิวินาที + ระบบ Lag ทำลายล้าง (Nuclear) --
--- แก้ไข: เพิ่มระบบป้องกันตกแมพ + โหลดแมพไวขึ้น (ห้ามแก้ส่วนอื่น) --
-
+-- 1. ล้าง UI เก่าทั้งหมด
 pcall(function()
-    _G.ShinnenActive = false
-    task.wait(0.1)
-    for _, v in pairs(game.CoreGui:GetChildren()) do
-        if v.Name == "Rayfield" then v:Destroy() end
-    end
+    if game.CoreGui:FindFirstChild("Rayfield") then game.CoreGui.Rayfield:Destroy() end
+    if game.CoreGui:FindFirstChild("CustomControlGui") then game.CoreGui.CustomControlGui:Destroy() end
+    if game.CoreGui:FindFirstChild("FloatingAutoE") then game.CoreGui.FloatingAutoE:Destroy() end
 end)
 
--- [0] ระบบแก้ตกแมพ (Anti-Fall & Map Loader)
-task.spawn(function()
-    if not game:IsLoaded() then game.Loaded:Wait() end
-    local plr = game.Players.LocalPlayer
-    local char = plr.Character or plr.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    
-    -- บังคับโหลดพื้นที่รอบตัวละคร (Streaming Optimization)
-    if plr.ReplicationFocus == nil then
-        plr.ReplicationFocus = hrp
-    end
-    
-    -- ตรวจสอบพื้นผิว: ถ้าไม่มีพื้น ให้ยึดตัวไว้กันตก
-    RunService.Heartbeat:Connect(function()
-        if _G.ShinnenActive then
-            local ray = Ray.new(hrp.Position, Vector3.new(0, -20, 0))
-            local hit = workspace:FindPartOnRay(ray, char)
-            if not hit then
-                hrp.Velocity = Vector3.new(0, 0, 0) -- หยุดแรงโน้มถ่วงชั่วคราวถ้าไม่มีพื้น
-            end
-        end
-    end)
+-- 2. โหลด Rayfield
+local Rayfield = nil
+local success, err = pcall(function()
+    Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 end)
 
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+if not success or not Rayfield then
+    warn("ไม่สามารถโหลด Rayfield ได้: ", err)
+    return
+end
+
 local Win = Rayfield:CreateWindow({
-    Name = "Shinnen Hub | V61.2 NUCLEAR",
-    LoadingTitle = "👿 Map Overclocking & Anti-Fall...",
-    LoadingSubtitle = "by New155700",
+    Name = "Pro Gamer Hub V4",
+    LoadingTitle = "กำลังโหลดข้อมูล...",
+    LoadingSubtitle = "No Bug Version",
     ConfigurationSaving = {Enabled = false}
 })
 
--- [1] ตัวแปรระบบ (Fast-Access Global)
-_G.ShinnenActive = true
-_G.WalkSpeed = 50
-_G.AutoAura = false
-_G.AuraRange = 100
-_G.MaxReach = 500
-_G.AntiStatus = true
-_G.LagAura = false
-_G.LagPower = 2000 
-
+-- 3. ตัวแปรพื้นฐาน
 local plr = game.Players.LocalPlayer
+local VIM = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 
--- [2] ระบบ NUCLEAR LAG (ถล่มทีมอื่น - โครงสร้างเดิม)
-local function CreateNuclearLag(p)
-    if p == plr then return end
-    task.spawn(function()
-        local att = Instance.new("Attachment")
-        local emit = Instance.new("ParticleEmitter")
-        emit.Texture = "rbxassetid://241381931"
-        emit.Size = NumberSequence.new(80, 80)
-        emit.Transparency = NumberSequence.new(0.95)
-        emit.Lifetime = NumberRange.new(0.05)
-        emit.Rate = 0
-        emit.RotSpeed = NumberRange.new(50000)
-        emit.Speed = NumberRange.new(0)
-        emit.Parent = att
-        
-        local function Attach(char)
-            local hrp = char:WaitForChild("HumanoidRootPart", 10)
-            if hrp then att.Parent = hrp end
-        end
-        if p.Character then Attach(p.Character) end
-        p.CharacterAdded:Connect(Attach)
-        
-        RunService.Heartbeat:Connect(function()
-            if _G.LagAura and (p.Team ~= plr.Team or p.Team == nil) then
-                emit.Rate = _G.LagPower
-                emit.Enabled = true
-            else
-                emit.Enabled = false
-            end
-        end)
-    end)
-end
-
-for _, p in pairs(game.Players:GetPlayers()) do CreateNuclearLag(p) end
-game.Players.PlayerAdded:Connect(CreateNuclearLag)
-
--- [3] ระบบ HYPER-DRIVE (Aura & Reach ไวที่สุด - โครงสร้างเดิม)
-RunService.RenderStepped:Connect(function()
-    if not _G.ShinnenActive then return end
-    pcall(function()
-        local char = plr.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-
-        if hum and _G.AntiStatus then
-            hum.PlatformStand = false
-            hum.Sit = false
-            hum.WalkSpeed = _G.WalkSpeed
-            for _, part in ipairs(char:GetChildren()) do
-                if part:IsA("BasePart") and part.Anchored then part.Anchored = false end
-            end
-        end
-
-        if _G.AutoAura and hrp then
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("ProximityPrompt") then
-                    v.MaxActivationDistance = _G.MaxReach
-                    v.RequiresLineOfSight = false
-                    v.HoldDuration = 0
-                    
-                    local pPos = v.Parent:IsA("BasePart") and v.Parent.Position or v.Parent:GetPivot().Position
-                    if (hrp.Position - pPos).Magnitude <= _G.AuraRange then
-                        task.spawn(function()
-                            v:InputHoldBegin()
-                            v:InputHoldEnd()
-                        end)
-                    end
-                end
-            end
-        end
-    end)
+local defaultWalkSpeed = 16
+pcall(function()
+    if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+        defaultWalkSpeed = plr.Character:FindFirstChildOfClass("Humanoid").WalkSpeed
+    end
 end)
 
--- [4] UI TABS
-local TabMain = Win:CreateTab("Main & God Mode")
-local TabExploit = Win:CreateTab("💀 Exploits")
+getgenv().Speed = defaultWalkSpeed
+getgenv().Distance = 50
+getgenv().AutoE = false
 
-TabMain:CreateSection("⚡ Movement & Status")
-TabMain:CreateInput({
-    Name = "⚡ Speed",
-    PlaceholderText = "50",
-    Callback = function(v) _G.WalkSpeed = tonumber(v) or 50 end
-})
+---------------------------------------------------------
+-- ระบบ หน้าต่างลอย (Floating Button) สำหรับเปิด/ปิด Auto E
+---------------------------------------------------------
+local floatGui = Instance.new("ScreenGui")
+floatGui.Name = "FloatingAutoE"
+floatGui.ResetOnSpawn = false
+floatGui.Parent = game.CoreGui
 
-TabMain:CreateToggle({
-    Name = "🛡️ ปลดสถานะติดบัค/มึน (Anti-Status)",
-    CurrentValue = true,
-    Callback = function(v) _G.AntiStatus = v end
-})
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 120, 0, 40)
+toggleBtn.Position = UDim2.new(0.5, -60, 0, 20)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50) -- สีแดง (ปิด)
+toggleBtn.Text = "Auto E : OFF"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 14
+local uiCornerFloat = Instance.new("UICorner")
+uiCornerFloat.CornerRadius = UDim.new(0, 8)
+uiCornerFloat.Parent = toggleBtn
+toggleBtn.Parent = floatGui
 
-TabMain:CreateSection("⭕ Reach & Aura")
-TabMain:CreateToggle({
-    Name = "⭕ เปิด Auto Aura (ไวระดับแสง)",
+-- ระบบลากปุ่มลอย (Drag)
+local dragToggle, dragInput2, dragStart2, startPos2
+toggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragToggle = true
+        dragStart2 = input.Position
+        startPos2 = toggleBtn.Position
+    end
+end)
+UIS.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput2 = input
+    end
+end)
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput2 and dragToggle then
+        local delta = input.Position - dragStart2
+        toggleBtn.Position = UDim2.new(startPos2.X.Scale, startPos2.X.Offset + delta.X, startPos2.Y.Scale, startPos2.Y.Offset + delta.Y)
+    end
+end)
+toggleBtn.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragToggle = false
+    end
+end)
+
+-- ระบบกดเปิด/ปิด
+toggleBtn.MouseButton1Click:Connect(function()
+    getgenv().AutoE = not getgenv().AutoE
+    if getgenv().AutoE then
+        toggleBtn.Text = "Auto E : ON"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50) -- สีเขียว
+    else
+        toggleBtn.Text = "Auto E : OFF"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50) -- สีแดง
+    end
+end)
+
+---------------------------------------------------------
+-- ระบบ Control GUI (จอยสติ๊ก & ปุ่มกระโดด)
+---------------------------------------------------------
+local controlGui = Instance.new("ScreenGui")
+controlGui.Name = "CustomControlGui"
+controlGui.Enabled = false
+controlGui.ResetOnSpawn = false
+controlGui.Parent = game.CoreGui
+
+-- Joystick
+local joyBase = Instance.new("Frame")
+joyBase.Size = UDim2.new(0, 150, 0, 150)
+joyBase.Position = UDim2.new(0, 50, 1, -220)
+joyBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+joyBase.BackgroundTransparency = 0.6
+joyBase.Active = true
+local uiCornerBase = Instance.new("UICorner")
+uiCornerBase.CornerRadius = UDim.new(1, 0)
+uiCornerBase.Parent = joyBase
+joyBase.Parent = controlGui
+
+local joyStick = Instance.new("Frame")
+joyStick.Size = UDim2.new(0, 65, 0, 65)
+joyStick.Position = UDim2.new(0.5, 0, 0.5, 0)
+joyStick.AnchorPoint = Vector2.new(0.5, 0.5)
+joyStick.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+joyStick.BackgroundTransparency = 0.4
+local uiCornerStick = Instance.new("UICorner")
+uiCornerStick.CornerRadius = UDim.new(1, 0)
+uiCornerStick.Parent = joyStick
+joyStick.Parent = joyBase
+
+-- Jump Button
+local jumpBtn = Instance.new("TextButton")
+jumpBtn.Size = UDim2.new(0, 90, 0, 90)
+jumpBtn.Position = UDim2.new(1, -150, 1, -180)
+jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+jumpBtn.BackgroundTransparency = 0.6
+jumpBtn.Text = "JUMP"
+jumpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+jumpBtn.Font = Enum.Font.GothamBold
+jumpBtn.TextSize = 20
+local uiCornerJump = Instance.new("UICorner")
+uiCornerJump.CornerRadius = UDim.new(1, 0)
+uiCornerJump.Parent = jumpBtn
+jumpBtn.Parent = controlGui
+
+jumpBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Joystick Logic
+local isDragging = false
+local moveDirX, moveDirY = 0, 0
+local dragInput = nil
+
+joyBase.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        isDragging = true
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and isDragging then
+        local baseCenter = joyBase.AbsolutePosition + (joyBase.AbsoluteSize / 2)
+        local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+        local delta = inputPos - baseCenter
+        local maxRadius = joyBase.AbsoluteSize.X / 2
+        if delta.Magnitude > maxRadius then delta = delta.Unit * maxRadius end
+        joyStick.Position = UDim2.new(0.5, delta.X, 0.5, delta.Y)
+        moveDirX = delta.X / maxRadius
+        moveDirY = delta.Y / maxRadius
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input == dragInput then
+        isDragging = false
+        dragInput = nil
+        joyStick:TweenPosition(UDim2.new(0.5, 0, 0.5, 0), "Out", "Back", 0.2)
+        moveDirX, moveDirY = 0, 0
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if isDragging then
+        local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            local cam = workspace.CurrentCamera
+            local forward = Vector3.new(cam.CFrame.LookVector.X, 0, cam.CFrame.LookVector.Z).Unit
+            local right = Vector3.new(cam.CFrame.RightVector.X, 0, cam.CFrame.RightVector.Z).Unit
+            hum:Move((right * moveDirX) + (forward * -moveDirY), false)
+        end
+    end
+end)
+
+---------------------------------------------------------
+-- ฟังก์ชันกดไวแบบดั้งเดิม (เอามาจากสคริปต์แรก 100%)
+---------------------------------------------------------
+
+-- วิ่งไว
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+            if hum then hum.WalkSpeed = getgenv().Speed end
+        end)
+    end
+end)
+
+-- Prompt instant & เพิ่มระยะ (ลูปทุก 0.1 วิเหมือนต้นฉบับ)
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("ProximityPrompt") then
+                    v.HoldDuration = 0
+                    v.MaxActivationDistance = getgenv().Distance -- ระยะกด
+                    v.RequiresLineOfSight = false -- กดทะลุกำแพง
+                end
+            end
+        end)
+    end
+end)
+
+-- กด E รัว (เอาดีเลย์ 0.1 ออก ให้รัวที่สุดด้วย VIM แบบต้นฉบับ)
+task.spawn(function()
+    while task.wait() do
+        if getgenv().AutoE then
+            pcall(function()
+                VIM:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                VIM:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+            end)
+        end
+    end
+end)
+
+---------------------------------------------------------
+-- สร้างหน้าเมนู (Tabs)
+---------------------------------------------------------
+local MainTab = Win:CreateTab("หน้าหลัก", 4483362458)
+
+MainTab:CreateToggle({
+    Name = "🕹️ เปิดระบบควบคุม (จอยสติ๊ก/กระโดด)",
     CurrentValue = false,
-    Callback = function(v) _G.AutoAura = v end
+    Callback = function(v)
+        controlGui.Enabled = v
+    end
 })
 
-TabMain:CreateInput({
-    Name = "📏 ระยะขยายปุ่ม (Reach Distance)",
-    PlaceholderText = "ใส่ตัวเลขระยะ",
-    Callback = function(v) _G.MaxReach = tonumber(v) or 500 end
+MainTab:CreateSlider({
+    Name = "📏 ระยะกด (Reach)",
+    Range = {10, 100},
+    Increment = 5,
+    Suffix = "Studs",
+    CurrentValue = 50,
+    Callback = function(v)
+        getgenv().Distance = v
+    end
 })
 
-TabExploit:CreateSection("💀 Nuclear Lag (คนอื่นค้าง)")
-TabExploit:CreateToggle({
-    Name = "💀 เปิด Nuclear Lag (ถล่มทีมอื่น)",
-    CurrentValue = false,
-    Callback = function(v) _G.LagAura = v end
+MainTab:CreateInput({
+    Name = "⚡ ความเร็วการเดิน (Speed)",
+    PlaceholderText = tostring(defaultWalkSpeed),
+    Callback = function(v)
+        local n = tonumber(v)
+        if n then getgenv().Speed = n end
+    end
 })
 
-TabExploit:CreateInput({
-    Name = "☢️ Nuclear Power",
-    PlaceholderText = "ใส่ค่าความแรง",
-    Callback = function(v) _G.LagPower = tonumber(v) or 1000 end
+Rayfield:Notify({
+    Title = "อัปเดตเสร็จสมบูรณ์!",
+    Content = "รวมระบบกดไวแบบดั้งเดิมเข้ากับ UI ใหม่ (ไม่บัคแน่นอน)",
+    Duration = 5,
+    Image = 4483362458,
 })
-
-Rayfield:Notify({Title = "V61.2 READY", Content = "Anti-Fall & Loader Active!", Duration = 5})
