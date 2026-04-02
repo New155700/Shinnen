@@ -8,7 +8,7 @@ end)
 -- 2. โหลด Rayfield
 local Rayfield = nil
 local success, err = pcall(function()
-    Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/New155700/Shinnen/refs/heads/main/ShinnenUI1.0"))()
+    Rayfield = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/c0688399d1caea380905ffb1f5e02459/raw/30ef6c815c9191bbf17b6dcbd3358276b34bd63a/gistfile1.txt"))()
 end)
 
 if not success or not Rayfield then
