@@ -1,55 +1,33 @@
--- [[ SHINNEN HUB | SECURE MASTER LOADER V4 ]] --
--- ระบบตรวจสอบไอดีแมพ: ถ้าไม่ตรงในลิสต์ "เตะออกทันที" --
-
+-- [[ SHINNEN HUB | MASTER LOADER V4 ]] --
 local currentId = tostring(game.PlaceId)
+-- ตรวจสอบลิงก์ให้ตรงกับ Github (เช็คตัวเล็ก/ใหญ่ของชื่อ Shinnen ด้วย)
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
--- [1] รายชื่อไอดีแมพที่อนุญาต (Whitelist)
 local MapConfig = {
-    ["100400297022629"] = "Games1.lua", -- แมพที่ 1
-    ["96255502718881"]  = "Games2.lua", -- แมพที่ 2
-    ["14469379009"]     = "Games3.lua"  -- แมพที่ 3
+    ["100400297022629"] = "Games1.lua",
+    ["96255502718881"] = "Games2.lua",
+    ["14469379009"] = "Games3.lua"
 }
 
--- [2] ระบบตรวจสอบความถูกต้อง (Security Check)
 local fileName = MapConfig[currentId]
 
-if not fileName then
-    -- ถ้าไอดีแมพไม่ตรงกับที่ตั้งไว้ ให้ทำการ "เตะ" ทันที
-    local kickMessage = "\n👿 SHINNEN HUB SECURITY 👿\n\nขออภัย! สคริปต์นี้ไม่รองรับแมพนี้\nID: " .. currentId .. "\nกรุณาเข้าเล่นในแมพที่กำหนดเท่านั้น"
-    game.Players.LocalPlayer:Kick(kickMessage)
-    return -- หยุดการทำงานของสคริปต์ทั้งหมด
-end
-
--- [3] ระบบล้าง UI เก่า (กรณีรันซ้ำในแมพที่ถูกต้อง)
-pcall(function()
-    for _, v in pairs(game.CoreGui:GetChildren()) do
-        if v.Name == "Rayfield" then v:Destroy() end
-    end
-end)
-
--- [4] ฟังก์ชันโหลดโค้ดจาก Cloud (แบบสดใหม่เสมอ)
-local function LoadShinnenCloud()
-    local finalUrl = baseUrl .. fileName .. "?t=" .. os.time()
-    
-    print("👿 Shinnen Hub: Authorized Access [Map: " .. currentId .. "]")
-    
-    local success, content = pcall(function() 
-        return game:HttpGet(finalUrl) 
+if fileName then
+    -- ใช้ pcall เพื่อป้องกันสคริปต์พังเงียบ
+    local success, content = pcall(function()
+        return game:HttpGet(baseUrl .. fileName)
     end)
-
+    
     if success and content then
         local func, err = loadstring(content)
         if func then
-            func() -- รันสคริปต์หลักจาก GitHub
-            print("👿 Shinnen Hub: Script Loaded!")
+            func() -- เริ่มทำงาน
         else
-            warn("👿 Shinnen Hub: Script Error -> " .. tostring(err))
+            warn("Syntax Error in " .. fileName .. ": " .. tostring(err))
         end
     else
-        warn("👿 Shinnen Hub: Connection Fail!")
+        warn("Failed to fetch " .. fileName .. " from GitHub. Check URL!")
     end
+else
+    -- ถ้าไม่ตรงแมพ ให้เตือนแทนการ Kick เพื่อดูผลการรัน
+    warn("SHINNEN HUB: This Map ID (" .. currentId .. ") is not in Whitelist.")
 end
-
--- เริ่มการทำงาน
-LoadShinnenCloud()
