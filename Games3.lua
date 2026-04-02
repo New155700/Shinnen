@@ -1,4 +1,4 @@
--- [[ N-SHINNEN : FULL OPTIMIZED VERSION ]] --
+-- [[ N-SHINNEN : FULL OPTIMIZED & SMOOTH MOBILE CONTROLS ]] --
 
 -- 1. ดึง Library (ห้ามเปลี่ยน URL)
 local URL = "https://gist.githubusercontent.com/New155700/3b4ee43d4cccb63f00fe75702086590a/raw/99d545c6d6784de87103009ddfd81f55f1f4bac2/Shinen"
@@ -17,6 +17,7 @@ local UIS = game:GetService("UserInputService")
 getgenv().Speed = 16
 getgenv().Distance = 50
 getgenv().AutoE = false
+getgenv().ClickAmount = 1 
 
 ---------------------------------------------------------
 -- [ ระบบหน้าต่างลอย Floating Button ]
@@ -39,7 +40,6 @@ uiCornerFloat.CornerRadius = UDim.new(0, 8)
 uiCornerFloat.Parent = toggleBtn
 toggleBtn.Parent = floatGui
 
--- Drag Logic สำหรับปุ่มลอย
 local dragToggle, dragInput2, dragStart2, startPos2
 toggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -70,64 +70,106 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- [ ระบบ UI Controls (จอยสติ๊ก) ]
+-- [ ระบบ UI Controls (จอยสติ๊กแบบเนียนพิเศษ) ]
 ---------------------------------------------------------
 local controlGui = Instance.new("ScreenGui")
+controlGui.Name = "CustomMobileControls"
 controlGui.Enabled = false
+controlGui.ResetOnSpawn = false
 controlGui.Parent = game.CoreGui
 
 local joyBase = Instance.new("Frame")
-joyBase.Size = UDim2.new(0, 130, 0, 130)
-joyBase.Position = UDim2.new(0, 50, 1, -200)
+joyBase.Size = UDim2.new(0, 140, 0, 140)
+joyBase.Position = UDim2.new(0, 40, 1, -210)
 joyBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-joyBase.BackgroundTransparency = 0.5
+joyBase.BackgroundTransparency = 0.7
+joyBase.Active = true 
 local uiCornerBase = Instance.new("UICorner")
 uiCornerBase.CornerRadius = UDim.new(1, 0)
 uiCornerBase.Parent = joyBase
 joyBase.Parent = controlGui
 
 local joyStick = Instance.new("Frame")
-joyStick.Size = UDim2.new(0, 50, 0, 50)
+joyStick.Size = UDim2.new(0, 60, 0, 60)
 joyStick.Position = UDim2.new(0.5, 0, 0.5, 0)
 joyStick.AnchorPoint = Vector2.new(0.5, 0.5)
 joyStick.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+joyStick.BackgroundTransparency = 0.4
 local uiCornerStick = Instance.new("UICorner")
 uiCornerStick.CornerRadius = UDim.new(1, 0)
 uiCornerStick.Parent = joyStick
 joyStick.Parent = joyBase
 
-local isDragging, moveDirX, moveDirY, dragInput = false, 0, 0, nil
-joyBase.InputBegan:Connect(function(input)
+local jumpBtn = Instance.new("TextButton")
+jumpBtn.Size = UDim2.new(0, 85, 0, 85)
+jumpBtn.Position = UDim2.new(1, -135, 1, -165)
+jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+jumpBtn.BackgroundTransparency = 0.7
+jumpBtn.Text = "JUMP"
+jumpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+jumpBtn.Font = Enum.Font.GothamBold
+jumpBtn.TextSize = 16
+jumpBtn.Active = true
+jumpBtn.Modal = true 
+local uiCornerJump = Instance.new("UICorner")
+uiCornerJump.CornerRadius = UDim.new(1, 0)
+uiCornerJump.Parent = jumpBtn
+jumpBtn.Parent = controlGui
+
+jumpBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        isDragging = true; dragInput = input
+        local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
+
+local isDragging, moveDir = false, Vector2.new(0, 0)
+local dragInput = nil
+
+joyBase.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = true; dragInput = input; joyBase.Modal = true 
+    end
+end)
+
 UIS.InputChanged:Connect(function(input)
     if input == dragInput and isDragging then
         local baseCenter = joyBase.AbsolutePosition + (joyBase.AbsoluteSize / 2)
         local delta = Vector2.new(input.Position.X, input.Position.Y) - baseCenter
         local maxRadius = joyBase.AbsoluteSize.X / 2
-        if delta.Magnitude > maxRadius then delta = delta.Unit * maxRadius end
+        
+        if delta.Magnitude > maxRadius then
+            delta = delta.Unit * maxRadius
+        end
+        
         joyStick.Position = UDim2.new(0.5, delta.X, 0.5, delta.Y)
-        moveDirX, moveDirY = delta.X / maxRadius, delta.Y / maxRadius
-    end
-end)
-UIS.InputEnded:Connect(function(input)
-    if input == dragInput then
-        isDragging = false; dragInput = nil
-        joyStick:TweenPosition(UDim2.new(0.5, 0, 0.5, 0), "Out", "Back", 0.2)
-        moveDirX, moveDirY = 0, 0
+        -- คำนวณความแรงตามระยะที่ดันจอย (เนียนขึ้น)
+        moveDir = delta / maxRadius
     end
 end)
 
+UIS.InputEnded:Connect(function(input)
+    if input == dragInput then
+        isDragging = false; dragInput = nil; joyBase.Modal = false
+        joyStick:TweenPosition(UDim2.new(0.5, 0, 0.5, 0), "Out", "Back", 0.15)
+        moveDir = Vector2.new(0, 0)
+    end
+end)
+
+-- ระบบเดินแบบเนียน (Camera Relative)
 RunService.RenderStepped:Connect(function()
     if isDragging and plr.Character then
         local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-        if hum then
+        if hum and moveDir.Magnitude > 0 then
             local cam = workspace.CurrentCamera
-            local forward = Vector3.new(cam.CFrame.LookVector.X, 0, cam.CFrame.LookVector.Z).Unit
-            local right = Vector3.new(cam.CFrame.RightVector.X, 0, cam.CFrame.RightVector.Z).Unit
-            hum:Move((right * moveDirX) + (forward * -moveDirY), false)
+            local camCFrame = cam.CFrame
+            
+            -- เดินตามกล้องเป๊ะๆ
+            local look = camCFrame.LookVector
+            local right = camCFrame.RightVector
+            
+            local moveVector = (right * moveDir.X) + (look * -moveDir.Y)
+            hum:Move(Vector3.new(moveVector.X, 0, moveVector.Z), false)
         end
     end
 end)
@@ -136,7 +178,6 @@ end)
 -- [ วงจรทำงานหลัก ]
 ---------------------------------------------------------
 
--- Speed Loop
 task.spawn(function()
     while task.wait() do
         pcall(function()
@@ -147,13 +188,13 @@ task.spawn(function()
     end
 end)
 
--- Reach Loop (ระยะกด ProximityPrompt)
 task.spawn(function()
     while task.wait(0.1) do
         pcall(function()
             for _, v in pairs(workspace:GetDescendants()) do
                 if v:IsA("ProximityPrompt") then
                     v.HoldDuration = 0
+                    v.ClickablePrompt = true
                     v.MaxActivationDistance = getgenv().Distance
                     v.RequiresLineOfSight = false
                 end
@@ -162,30 +203,37 @@ task.spawn(function()
     end
 end)
 
--- Auto E Loop (SendKeyEvent)
 task.spawn(function()
     while task.wait() do
         if getgenv().AutoE then
             pcall(function()
-                VIM:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                VIM:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                for i = 1, getgenv().ClickAmount do
+                    VIM:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                    VIM:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                end
             end)
         end
     end
 end)
 
 ---------------------------------------------------------
--- [ การตั้งค่าหน้าเมนู UI : แก้ไขให้ตรงกับ Library ]
+-- [ เมนู UI ]
 ---------------------------------------------------------
 
 MainTab:CreateToggle({
-    Name = "🕹️ เปิดระบบควบคุม (Joystick)",
+    Name = "🕹️ เปิดระบบควบคุม (Smooth Joystick)",
     Callback = function(v)
         controlGui.Enabled = v
     end
 })
 
--- ใช้ CreateInput แทน Slider เพราะ Library นี้เน้นความเสถียรผ่านการกรอกค่า
+MainTab:CreateToggle({
+    Name = "🔥 โหมดกดไวขั้นสุด (x100)",
+    Callback = function(v)
+        getgenv().ClickAmount = v and 100 or 1
+    end
+})
+
 MainTab:CreateInput({
     Name = "📏 ระยะกด (Reach Distance)",
     Callback = function(v)
@@ -207,7 +255,4 @@ MainTab:CreateToggle({
     end
 })
 
--- แจ้งเตือนเมื่อโหลดสำเร็จ
-pcall(function()
-    NScanner:Notify("N-SHINNEN", "อัปเดตระบบเสร็จสมบูรณ์ ทุกฟังก์ชันพร้อมใช้งาน!", 5)
-end)
+NScanner:Notify("N-SHINNEN", "อัปเดตจอยสติ๊กแบบเนียนพิเศษสำเร็จ!", 5)
