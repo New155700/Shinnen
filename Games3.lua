@@ -1,7 +1,7 @@
 -- [[ N-SHINNEN : FULL OPTIMIZED & SMOOTH MOBILE CONTROLS ]] --
 
 -- 1. ดึง Library (ห้ามเปลี่ยน URL)
-local URL = "https://gist.githubusercontent.com/New155700/3b4ee43d4cccb63f00fe75702086590a/raw/99d545c6d6784de87103009ddfd81f55f1f4bac2/Shinen"
+local URL = "https://gist.githubusercontent.com/New155700/daeaac8ab6032f5c0d414c658857ed69/raw/d4810c995efcea3d472d0ba95c5b3a0f33695548/NSHINNEN"
 local NScanner = loadstring(game:HttpGet(URL))()
 
 -- 2. สร้างหน้าต่าง และหน้าเมนู
