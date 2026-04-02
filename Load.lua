@@ -1,7 +1,7 @@
--- [[ SHINNEN HUB | MASTER LOADER V4 ]] --
+print("1. เริ่มทำงาน Master Loader...")
+
 local currentId = tostring(game.PlaceId)
--- ตรวจสอบลิงก์ให้ตรงกับ Github (เช็คตัวเล็ก/ใหญ่ของชื่อ Shinnen ด้วย)
-local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/" -- เช็คตัว S ใหญ่/เล็กดีๆ
 
 local MapConfig = {
     ["100400297022629"] = "Games1.lua",
@@ -10,24 +10,27 @@ local MapConfig = {
 }
 
 local fileName = MapConfig[currentId]
+print("2. ตรวจสอบแมพไอดี: " .. currentId)
 
 if fileName then
-    -- ใช้ pcall เพื่อป้องกันสคริปต์พังเงียบ
+    print("3. พบไฟล์ที่ต้องโหลด: " .. fileName)
+    
     local success, content = pcall(function()
         return game:HttpGet(baseUrl .. fileName)
     end)
     
-    if success and content then
+    if success then
+        print("4. ดึงข้อมูลจาก GitHub สำเร็จ!")
         local func, err = loadstring(content)
         if func then
-            func() -- เริ่มทำงาน
+            print("5. โหลดโค้ดลงเครื่องสำเร็จ กำลังเริ่มรันเมนู...")
+            func()
         else
-            warn("Syntax Error in " .. fileName .. ": " .. tostring(err))
+            warn("!!! Syntax Error (โค้ดข้างในไฟล์พัง): " .. tostring(err))
         end
     else
-        warn("Failed to fetch " .. fileName .. " from GitHub. Check URL!")
+        warn("!!! Http Error (ดึงไฟล์ไม่ได้): " .. tostring(content))
     end
 else
-    -- ถ้าไม่ตรงแมพ ให้เตือนแทนการ Kick เพื่อดูผลการรัน
-    warn("SHINNEN HUB: This Map ID (" .. currentId .. ") is not in Whitelist.")
+    warn("!!! แมพไอดีนี้ไม่อยู่ในลิสต์ Whitelist")
 end
