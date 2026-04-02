@@ -1,4 +1,4 @@
--- [[ N-SHINNEN : TURBO E + MOBILE CONTROLS V6 ]] --
+-- [[ N-SHINNEN : TURBO E + MASTER MOBILE CONTROLS V7 ]] --
 
 local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/49f2dcb1a4bf968cba35f5521c684bb6/raw/ae4518df255ca958f4a07b5e066ed9df1ad26cea/HiSHINUI"))()
 local Win = Library:CreateWindow("🔥 N-SHINNEN TURBO + JOY")
@@ -13,25 +13,28 @@ getgenv().Distance = 50
 getgenv().AutoE = false
 getgenv().TurboMode = false
 getgenv().ClickAmount = 1
-getgenv().ShowControls = true -- เปิด/ปิด ปุ่มเดิน
 
 ---------------------------------------------------------
--- [ ระบบปุ่มเดินและกระโดด (Mobile UI on PC) ]
+-- [ ระบบปุ่มเดินและกระโดด (Mobile UI) ]
 ---------------------------------------------------------
 local controlGui = Instance.new("ScreenGui", game.CoreGui)
 controlGui.Name = "N_Shinnen_Controls"
 controlGui.ResetOnSpawn = false
+controlGui.Enabled = true -- << เปิดไว้ให้เลยตั้งแต่รัน
 
--- จอยสติ๊ก (Joystick)
+-- จอยสติ๊ก (Joystick Base)
 local joyBase = Instance.new("Frame", controlGui)
-joyBase.Size = UDim2.new(0, 150, 0, 150)
-joyBase.Position = UDim2.new(0, 50, 1, -200)
+joyBase.Size = UDim2.new(0, 140, 0, 140)
+joyBase.Position = UDim2.new(0, 50, 1, -220)
 joyBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-joyBase.BackgroundTransparency = 0.5
+joyBase.BackgroundTransparency = 0.6
 Instance.new("UICorner", joyBase).CornerRadius = UDim.new(1, 0)
+local joyStroke = Instance.new("UIStroke", joyBase)
+joyStroke.Thickness = 2
+joyStroke.Color = Color3.fromRGB(0, 255, 200) -- นีออนเขียวฟ้า
 
 local joyStick = Instance.new("Frame", joyBase)
-joyStick.Size = UDim2.new(0, 70, 0, 70)
+joyStick.Size = UDim2.new(0, 60, 0, 60)
 joyStick.Position = UDim2.new(0.5, 0, 0.5, 0)
 joyStick.AnchorPoint = Vector2.new(0.5, 0.5)
 joyStick.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -40,15 +43,18 @@ Instance.new("UICorner", joyStick).CornerRadius = UDim.new(1, 0)
 
 -- ปุ่มกระโดด (Jump Button)
 local jumpBtn = Instance.new("TextButton", controlGui)
-jumpBtn.Size = UDim2.new(0, 100, 0, 100)
-jumpBtn.Position = UDim2.new(1, -150, 1, -200)
+jumpBtn.Size = UDim2.new(0, 90, 0, 90)
+jumpBtn.Position = UDim2.new(1, -140, 1, -220)
 jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-jumpBtn.BackgroundTransparency = 0.5
+jumpBtn.BackgroundTransparency = 0.6
 jumpBtn.Text = "JUMP"
 jumpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-jumpBtn.Font = Enum.Font.GothamBold
-jumpBtn.TextSize = 20
+jumpBtn.Font = Enum.Font.GothamBlack
+jumpBtn.TextSize = 18
 Instance.new("UICorner", jumpBtn).CornerRadius = UDim.new(1, 0)
+local jumpStroke = Instance.new("UIStroke", jumpBtn)
+jumpStroke.Thickness = 2
+jumpStroke.Color = Color3.fromRGB(0, 255, 200)
 
 -- ระบบจอยสติ๊กทำงาน
 local isDragging, moveDir = false, Vector2.new(0, 0)
@@ -74,19 +80,17 @@ end)
 UIS.InputEnded:Connect(function(input)
     if input == joyInput then
         isDragging = false; joyInput = nil
-        joyStick:TweenPosition(UDim2.new(0.5, 0, 0.5, 0), "Out", "Back", 0.15)
+        joyStick:TweenPosition(UDim2.new(0.5, 0, 0.5, 0), "Out", "Back", 0.1)
         moveDir = Vector2.new(0, 0)
     end
 end)
 
--- ปุ่มกระโดด
 jumpBtn.MouseButton1Click:Connect(function()
     if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
         plr.Character:FindFirstChildOfClass("Humanoid").Jump = true
     end
 end)
 
--- ระบบเดิน (Camera Relative)
 RunService.RenderStepped:Connect(function()
     if isDragging and plr.Character then
         local hum = plr.Character:FindFirstChildOfClass("Humanoid")
@@ -99,7 +103,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 ---------------------------------------------------------
--- [ ระบบหน้าต่างลอย Floating Button (Turbo E) ]
+-- [ ระบบปุ่มลอย Turbo E ]
 ---------------------------------------------------------
 local floatGui = Instance.new("ScreenGui", game.CoreGui)
 floatGui.Name = "TurboFloating"
@@ -114,12 +118,10 @@ toggleBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
 toggleBtn.Font = Enum.Font.GothamBlack
 toggleBtn.TextSize = 14
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+local turboStroke = Instance.new("UIStroke", toggleBtn)
+turboStroke.Thickness = 3
+turboStroke.Color = Color3.fromRGB(255, 50, 50)
 
-local btnStroke = Instance.new("UIStroke", toggleBtn)
-btnStroke.Thickness = 3
-btnStroke.Color = Color3.fromRGB(255, 50, 50)
-
--- ลากปุ่มลอย
 local draggingF, dragInputF, dragStartF, startPosF
 toggleBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -140,7 +142,7 @@ local function SyncAutoE(state)
     getgenv().AutoE = state
     toggleBtn.Text = state and "TURBO: ON" or "TURBO: OFF"
     toggleBtn.TextColor3 = state and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 50, 50)
-    btnStroke.Color = state and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 50, 50)
+    turboStroke.Color = state and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 50, 50)
 end
 
 toggleBtn.MouseButton1Click:Connect(function()
@@ -148,10 +150,8 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- [ Master Logic: Instant Bypass & Turbo ]
+-- [ Master Logic ]
 ---------------------------------------------------------
-
--- 1. Bypass ProximityPrompt
 task.spawn(function()
     while task.wait(0.1) do
         pcall(function()
@@ -167,7 +167,6 @@ task.spawn(function()
     end
 end)
 
--- 2. Turbo Click Loop
 task.spawn(function()
     while true do
         RunService.Heartbeat:Wait()
@@ -186,9 +185,8 @@ end)
 ---------------------------------------------------------
 -- [ เมนู UI ]
 ---------------------------------------------------------
-
 local MainTab = Win:CreateTab("Settings")
-local JoySec = MainTab:CreateSection("🕹️ bypass Mobile Controls")
+local JoySec = MainTab:CreateSection("🕹️ Mobile Controls")
 
 JoySec:CreateToggle("แสดงปุ่มเดินและกระโดด", function(v)
     controlGui.Enabled = v
@@ -212,7 +210,6 @@ FarmSec:CreateSlider("ระยะกด (Reach)", 10, 500, 50, function(v)
     getgenv().Distance = v
 end)
 
--- Loop WalkSpeed (ทำงานร่วมกับจอยสติ๊ก)
 task.spawn(function()
     while task.wait() do
         pcall(function()
@@ -223,4 +220,4 @@ task.spawn(function()
     end
 end)
 
-Library:Notify("N-SHINNEN", "ระบบ Turbo + ปุ่มเดินมือถือ โหลดเสร็จแล้ว!", 5)
+Library:Notify("N-SHINNEN", "ระบบ Turbo + ปุ่มเดินมาแล้วครับลูกพี่!", 5)
