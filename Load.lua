@@ -1,36 +1,33 @@
-print("1. เริ่มทำงาน Master Loader...")
-
+-- [[ SHINNEN HUB | MASTER LOADER V4 ]] --
 local currentId = tostring(game.PlaceId)
-local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/" -- เช็คตัว S ใหญ่/เล็กดีๆ
+-- สำคัญ: เช็คตัว S ในชื่อ Shinnen ให้ตรงกับใน GitHub เป๊ะๆ
+local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 local MapConfig = {
-    ["100400297022629"] = "Games1.lua",
-    ["96255502718881"] = "Games2.lua",
-    ["14469379009"] = "Games3.lua"
+    ["100400297022629"] = "Games1.lua", -- ไอดีแมพที่ 1
+    ["96255502718881"]  = "Games2.lua", -- ไอดีแมพที่ 2
+    ["14469379009"]     = "Games3.lua"  -- ไอดีแมพที่ 3
 }
 
 local fileName = MapConfig[currentId]
-print("2. ตรวจสอบแมพไอดี: " .. currentId)
 
 if fileName then
-    print("3. พบไฟล์ที่ต้องโหลด: " .. fileName)
-    
+    -- ดึงโค้ดจาก GitHub มาเช็คก่อนรัน
     local success, content = pcall(function()
         return game:HttpGet(baseUrl .. fileName)
     end)
     
-    if success then
-        print("4. ดึงข้อมูลจาก GitHub สำเร็จ!")
+    if success and content then
         local func, err = loadstring(content)
         if func then
-            print("5. โหลดโค้ดลงเครื่องสำเร็จ กำลังเริ่มรันเมนู...")
-            func()
+            func() -- รันไฟล์ลูก (Games.lua)
         else
-            warn("!!! Syntax Error (โค้ดข้างในไฟล์พัง): " .. tostring(err))
+            warn("Syntax Error in " .. fileName .. ": " .. tostring(err))
         end
     else
-        warn("!!! Http Error (ดึงไฟล์ไม่ได้): " .. tostring(content))
+        warn("Failed to fetch " .. fileName .. ". Check your GitHub URL!")
     end
 else
-    warn("!!! แมพไอดีนี้ไม่อยู่ในลิสต์ Whitelist")
+    -- ถ้าแมพไม่ตรง ให้แจ้งเตือนใน F9
+    warn("This Map ID (" .. currentId .. ") is not in the whitelist.")
 end
