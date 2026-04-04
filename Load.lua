@@ -1,39 +1,41 @@
--- [[ SHINNEN HUB | MASTER LOADER & SECURITY ]] --
-local currentId = tostring(game.PlaceId)
+-- [[ SHINNEN HUB | MASTER LOADER V6 : MM2 EDITION ]] --
 local plr = game:GetService("Players").LocalPlayer
+local currentId = game.PlaceId 
+
+-- [ 🔗 ลิงก์หลัก GitHub ของพี่ ]
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
--- [ 📋 ตารางแมพที่อนุญาต ]
--- ถ้า ID ตรงกับในนี้ จะไปดึงไฟล์ .lua ชื่อนั้นๆ มาจาก GitHub ของคุณ
+-- [ 📋 ตารางแมพ (ล็อค ID ให้ตรงไฟล์) ]
 local MapConfig = {
-    ["286090429"] = "Games2.lua", -- Murder Mystery 2
-    ["142823291"] = "Games1.lua", -- Arsenal (ตัวอย่าง)
-    ["155615604"] = "Games3.lua", -- Prison Life (ตัวอย่าง)
-    -- เพิ่ม ID แมพอื่นๆ ที่นี่...
+    [142823291] = "Games2.lua", -- ID แมพ Murder Mystery 2 หลัก
+    [286090429] = "Games2.lua", -- ID แมพทดสอบที่พี่ใช้
 }
+
+-- ระบบล้าง UI เก่าป้องกันบัค
+pcall(function()
+    for _, v in pairs(game.CoreGui:GetChildren()) do
+        if v:IsA("ScreenGui") and (v.Name == "N_FOV_GUI" or v.Name == "ShinnenUI") then
+            v:Destroy()
+        end
+    end
+end)
 
 local fileName = MapConfig[currentId]
 
 if fileName then
-    -- 🚀 ระบบดึงไฟล์สคริปต์จาก GitHub ตามแมพที่ตรวจเจอ
-    local success, content = pcall(function() 
-        return game:HttpGet(baseUrl .. fileName) 
-    end)
-
+    local success, content = pcall(function() return game:HttpGet(baseUrl .. fileName) end)
     if success and content and content ~= "" then
         local func, err = loadstring(content)
         if func then
-            print("✅ [SHINNEN]: Loading specific script for " .. currentId)
-            func() -- รันสคริปต์ของแมพนั้น
+            print("✅ [SHINNEN]: กำลังดึงข้อมูลจาก -> " .. fileName)
+            func() 
         else
-            -- ถ้าไฟล์ใน GitHub เขียนผิด (Syntax Error) จะเตะออก
-            plr:Kick("🚨 [SHINNEN ERROR]: สคริปต์ในไฟล์ " .. fileName .. " มีจุดผิด")
+            plr:Kick("🚨 [ERROR]: โค้ดใน GitHub มีจุดผิด (Syntax Error)")
         end
     else
-        -- ถ้าดึงไฟล์จาก GitHub ไม่ได้ (ชื่อไฟล์ผิดหรือเซิร์ฟเวอร์ล่ม) จะเตะออก
-        plr:Kick("🚨 [SHINNEN ERROR]: ไม่สามารถดึงสคริปต์จาก GitHub ได้")
+        plr:Kick("🚨 [ERROR]: ไม่สามารถเชื่อมต่อ GitHub หรือหาไฟล์ " .. fileName .. " ไม่เจอ")
     end
 else
-    -- ❌ ถ้าแมพที่รันอยู่ "ไม่มีในตาราง MapConfig" ให้เตะออกทันที
-    plr:Kick("🚨 [SHINNEN SECURITY]: แมพนี้ไม่ได้รับอนุญาตให้ใช้งาน (ID: " .. currentId .. ")")
+    -- ❌ ถ้า ID แมพไม่ตรงตามที่ตั้งไว้ ให้เตะออกทันที ไม่โหลดมั่ว
+    plr:Kick("🚨 [SECURITY]: แมพนี้ไม่ได้รับอนุญาต (ID: " .. tostring(currentId) .. ")")
 end
