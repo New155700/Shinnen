@@ -7,7 +7,7 @@ local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 -- [ 📋 ตารางแมพ (ล็อค ID ให้ตรงไฟล์) ]
 local MapConfig = {
-    [142823291] = "Games2.lua", -- ID แมพ Murder Mystery 2 หลัก
+    [636649648] = "Games2.lua", -- ID แมพ Murder Mystery 2 หลัก
     [14469379009] = "Games3.lua", -- ID แมพทดสอบที่พี่ใช้
 }
 
