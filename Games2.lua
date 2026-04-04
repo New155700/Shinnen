@@ -12,7 +12,7 @@ local Win = Library:CreateWindow("🔥 N-SHINNEN : PRO MAX")
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local CoreGui = pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui") or plr:WaitForChild("PlayerGui")
+local CoreGui = game:GetService("CoreGui")
 local Camera = workspace.CurrentCamera
 local Mouse = plr:GetMouse()
 
