@@ -1,18 +1,15 @@
--- [[ N-SHINNEN V50 : PERFECT CENTER FOV & PURE SILENT AIM ]] --
-
+-- [[ N-SHINNEN V100 : MM2 PRO EDITION ]] --
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Success, Library = pcall(function()
     return loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/ca3ee71cb4c922c5055bca31b4fa9578/raw/145adea59e4bfc4c4273b7e8b6b925d8969cae49/HIUISHINNEN"))()
 end)
-
 if not Success or not Library then return end
 
-local Win = Library:CreateWindow("🔥 N-SHINNEN : PRO MAX")
+local Win = Library:CreateWindow("🔥 N-SHINNEN : MM2 PRO")
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
 local Camera = workspace.CurrentCamera
 local Mouse = plr:GetMouse()
 
