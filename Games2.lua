@@ -1,26 +1,10 @@
 -- [[ N-SHINNEN V100 : PRO MAX (UI FIXED) ]] --
-if not game:IsLoaded() then game.Loaded:Wait() end
+local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/ca3ee71cb4c922c5055bca31b4fa9578/raw/145adea59e4bfc4c4273b7e8b6b925d8969cae49/HIUISHINNEN"))()
+local Win = Library:CreateWindow("🔥 N-SHINNEN V15 TURBO")
 
--- [ ⚙️ Services ]
-local Players = game:GetService("Players")
+local plr = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
-local Camera = workspace.CurrentCamera
-local plr = Players.LocalPlayer
-local Mouse = plr:GetMouse()
-
--- [ 🎨 Load UI Library ]
-local Success, Library = pcall(function()
-    return loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/ca3ee71cb4c922c5055bca31b4fa9578/raw/145adea59e4bfc4c4273b7e8b6b925d8969cae49/HIUISHINNEN"))()
-end)
-
-if not Success or not Library then 
-    plr:Kick("UI Library Load Failed!")
-    return 
-end
-
--- [ 🏠 Create Window ]
-local Win = Library:CreateWindow("🔥 N-SHINNEN : PRO MAX")
+local UIS = game:GetService("UserInputService")
 
 -- [ 🟢 FOV GUI Setup ]
 local function SetupFOV()
