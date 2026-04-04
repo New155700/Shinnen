@@ -7,7 +7,7 @@ local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 -- [ 📋 ตารางแมพ (แมพไหนรันไฟล์ไหน) ]
 local MapConfig = {
     ["100400297022629"] = "Games1.lua", 
-    ["286090429"] = "Games2.lua", 
+    ["142823291"] = "Games2.lua", 
     ["14469379009"] = "Games3.lua", 
     -- เพิ่ม ID แมพต่อไปได้ที่นี่...
 }
