@@ -1,11 +1,19 @@
 -- [[ N-SHINNEN : CUSTOM TURBO & INSTANT BYPASS V15 ]] --
 
-local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/49f2dcb1a4bf968cba35f5521c684bb6/raw/ae4518df255ca958f4a07b5e066ed9df1ad26cea/HiSHINUI"))()
-local Win = Library:CreateWindow("🔥 N-SHINNEN V15 TURBO")
 
-local plr = game.Players.LocalPlayer
+local Success, Library = pcall(function()
+    return loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/ca3ee71cb4c922c5055bca31b4fa9578/raw/145adea59e4bfc4c4273b7e8b6b925d8969cae49/HIUISHINNEN"))()
+end)
+
+if not Success or not Library then return end
+
+local Win = Library:CreateWindow("🔥 N-SHINNEN : PRO MAX")
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
+local CoreGui = pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui") or plr:WaitForChild("PlayerGui")
+local Camera = workspace.CurrentCamera
+local Mouse = plr:GetMouse()
 
 -- Variables
 getgenv().Speed = 16
