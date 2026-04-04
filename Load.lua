@@ -8,8 +8,7 @@ local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 -- [ 📋 ตารางแมพ (ตัวอย่าง: MM2 ไปที่ Games2.lua) ]
 local MapConfig = {
     ["142823291"] = "Games2.lua", -- Murder Mystery 2
-    ["100400297022629"] = "Games1.lua", -- ตัวอย่างแมพอื่น
-    -- เพิ่ม ID แมพต่อไปได้ที่นี่...
+    ["100400297022629"] = "Games1.lua", -- แมพกินอาหาร
 }
 
 local fileName = MapConfig[currentId]
