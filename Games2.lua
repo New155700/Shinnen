@@ -1,8 +1,6 @@
--- [[ N-SHINNEN V100 : PRO MAX (SMART AIM + NO STUCK + FULL FUNCTIONS) ]] --
 local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/ca3ee71cb4c922c5055bca31b4fa9578/raw/145adea59e4bfc4c4273b7e8b6b925d8969cae49/HIUISHINNEN"))()
 local Win = Library:CreateWindow("🔥 N-SHINNEN PRO ")
 
--- [ 🛠️ CORE VARIABLES ]
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
@@ -11,7 +9,6 @@ local Camera = workspace.CurrentCamera
 local plr = Players.LocalPlayer
 local Mouse = plr:GetMouse()
 
--- [ 🟢 FOV GUI (RGB) ]
 local FOV_Gui = CoreGui:FindFirstChild("N_FOV_GUI")
 if FOV_Gui then FOV_Gui:Destroy() end
 
@@ -39,7 +36,6 @@ FOV_Corner.CornerRadius = UDim.new(1, 0)
 local ESP_Folder = CoreGui:FindFirstChild("N_ESP_FOLDER") or Instance.new("Folder", CoreGui)
 ESP_Folder.Name = "N_ESP_FOLDER"
 
--- [ 🟡 Global Variables ]
 getgenv().Bypass_Enabled = true 
 getgenv().ESP_Enabled = false
 getgenv().Show_Tracer = false
@@ -72,7 +68,6 @@ getgenv().SpinPush_Enabled = false
 getgenv().Saved_Origin_CFrame = nil 
 local Orbit_Angle = 0
 
--- [ 🛡️ BYPASS ANTI-CHEAT (Metatable Hook) ]
 local mt = getrawmetatable(game)
 local oldNewIndex = mt.__newindex
 setreadonly(mt, false)
@@ -86,7 +81,6 @@ mt.__newindex = newcclosure(function(t, k, v)
 end)
 setreadonly(mt, true)
 
--- [ 🔵 Helper Functions ]
 local function GetRole(p)
     if not p then return "ผู้บริสุทธิ์", Color3.fromRGB(240, 240, 245) end 
     local isM, isS = false, false
@@ -139,7 +133,6 @@ local function IsVisible(targetChar)
     return not workspace:Raycast(origin, direction, params)
 end
 
--- [ 🧠 SMART TARGETING LOGIC ]
 local function GetAimbotTarget()
     if getgenv().Aim_Target_Name ~= "[ Auto-Lock Murderer ]" and getgenv().Aim_Target_Name ~= "[ Reset Target ]" then
         local explicitTarget = Players:FindFirstChild(getgenv().Aim_Target_Name)
@@ -215,7 +208,6 @@ local function CleanupESP(p)
     end)
 end
 
--- [ 🛠️ ANTI-STUCK / FIX WEIGHT ]
 local function FixWeight()
     local char = plr.Character
     if not char then return end
@@ -237,10 +229,6 @@ local function FixWeight()
 end
 
 local function SafeToggle(v) if type(v) == "boolean" then return v elseif type(v) == "table" then return v[1] == true end return false end
-
----------------------------------------------------------
--- [ 🎨 UI Setup ]
----------------------------------------------------------
 
 local VisualTab = Win:CreateTab("👁️ Visuals")
 local EspSec = VisualTab:CreateSection("ระบบมองทะลุ & ESP")
@@ -323,11 +311,6 @@ MoveSec:CreateSlider("ความเร็วเดิน", 16, 150, 16, functi
 MoveSec:CreateToggle("👻 ทะลุแมพและกำแพง (Phase)", function(v) getgenv().Phase_Enabled = SafeToggle(v) end)
 MoveSec:CreateToggle("🛡️ กันผู้เล่นอื่นชน (NoCollide Players)", function(v) getgenv().Bypass_Collision = SafeToggle(v) end)
 
----------------------------------------------------------
--- [ 🚀 ENGINE LOOPS ]
----------------------------------------------------------
-
--- 🔴 Thread 1: FOV UI & Aimbot Camera
 RunService:BindToRenderStep("N_Aimbot", Enum.RenderPriority.Camera.Value + 1, function()
     if FOV_Gui then
         FOV_Gui.Enabled = getgenv().Show_FOV
@@ -353,7 +336,6 @@ RunService:BindToRenderStep("N_Aimbot", Enum.RenderPriority.Camera.Value + 1, fu
     end
 end)
 
--- 🔴 Thread 2: ESP, Hitbox, Tracer
 task.spawn(function()
     while task.wait(0.1) do
         for _, p in pairs(Players:GetPlayers()) do
@@ -424,7 +406,6 @@ task.spawn(function()
     end
 end)
 
--- 🔴 Thread 3: Movement, Fly Control & Warps
 RunService.Stepped:Connect(function()
     pcall(function()
         local char = plr.Character
@@ -432,10 +413,8 @@ RunService.Stepped:Connect(function()
         local hum = char:FindFirstChild("Humanoid")
         local myRoot = char:FindFirstChild("HumanoidRootPart")
 
-        -- 🛡️ แก้เดินอืด/ตัวติด
         FixWeight()
 
-        -- 🕊️ ระบบบิน (Fly)
         if getgenv().Fly_Enabled and flyVel and flyGyro and hum and myRoot then
             local camCFrame = Camera.CFrame
             local moveDir = hum.MoveDirection
@@ -454,8 +433,7 @@ RunService.Stepped:Connect(function()
             end
             flyGyro.CFrame = camCFrame
         end
-
-        -- 🌀 ระบบ Warp (Head TP, Eel, Orbit, SpinPush)
+                
         local warpTarget = GetSpecificTarget(getgenv().Warp_Target_Name)
         if warpTarget and warpTarget.Character and warpTarget.Character:FindFirstChild("HumanoidRootPart") and myRoot then
             local tRoot = warpTarget.Character.HumanoidRootPart
@@ -470,12 +448,10 @@ RunService.Stepped:Connect(function()
             myRoot.Velocity = myRoot.CFrame.LookVector * 100
         end
 
-        -- 👻 เดินทะลุแมพและกำแพง (Phase)
         if getgenv().Phase_Enabled then
             for _, part in ipairs(char:GetChildren()) do if part:IsA("BasePart") then part.CanCollide = false end end
         end
         
-        -- 🛡️ กันผู้เล่นอื่นชน (NoCollide Players)
         if getgenv().Bypass_Collision then
             for _, p in pairs(Players:GetPlayers()) do
                 if p ~= plr and p.Character then
