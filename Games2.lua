@@ -436,4 +436,53 @@ RunService.Stepped:Connect(function()
         FixWeight()
 
         -- 🕊️ ระบบบิน (Fly)
-        if getgenv().Fly_Enabled an
+        if getgenv().Fly_Enabled and flyVel and flyGyro and hum and myRoot then
+            local camCFrame = Camera.CFrame
+            local moveDir = hum.MoveDirection
+            if moveDir.Magnitude > 0 then
+                local forward = (UIS:IsKeyDown(Enum.KeyCode.W) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.S) and 1 or 0)
+                local right = (UIS:IsKeyDown(Enum.KeyCode.D) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.A) and 1 or 0)
+                local targetVel = Vector3.new(0,0,0)
+                if UIS.TouchEnabled then
+                    targetVel = camCFrame:VectorToWorldSpace(Vector3.new(moveDir.X, 0, moveDir.Z * -1))
+                else
+                    targetVel = (camCFrame.LookVector * forward) + (camCFrame.RightVector * right)
+                end
+                flyVel.Velocity = targetVel.Unit * getgenv().Fly_Speed
+            else
+                flyVel.Velocity = Vector3.new(0, 0, 0)
+            end
+            flyGyro.CFrame = camCFrame
+        end
+
+        -- 🌀 ระบบ Warp (Head TP, Eel, Orbit, SpinPush)
+        local warpTarget = GetSpecificTarget(getgenv().Warp_Target_Name)
+        if warpTarget and warpTarget.Character and warpTarget.Character:FindFirstChild("HumanoidRootPart") and myRoot then
+            local tRoot = warpTarget.Character.HumanoidRootPart
+            if getgenv().Follow_Enabled then myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 3.5, 0)
+            elseif getgenv().Eel_Enabled then myRoot.CFrame = tRoot.CFrame * CFrame.new(0, math.sin(tick() * 10) * 3, 0)
+            elseif getgenv().Orbit_Enabled then Orbit_Angle = Orbit_Angle + 0.05; myRoot.CFrame = tRoot.CFrame * CFrame.Angles(0, Orbit_Angle, 0) * CFrame.new(0, 0, 5)
+            end
+        end
+
+        if getgenv().SpinPush_Enabled and myRoot then
+            myRoot.CFrame = myRoot.CFrame * CFrame.Angles(0, math.rad(50), 0)
+            myRoot.Velocity = myRoot.CFrame.LookVector * 100
+        end
+
+        -- 👻 เดินทะลุแมพและกำแพง (Phase)
+        if getgenv().Phase_Enabled then
+            for _, part in ipairs(char:GetChildren()) do if part:IsA("BasePart") then part.CanCollide = false end end
+        end
+        
+        -- 🛡️ กันผู้เล่นอื่นชน (NoCollide Players)
+        if getgenv().Bypass_Collision then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= plr and p.Character then
+                    for _, part in ipairs(p.Character:GetChildren()) do if part:IsA("BasePart") then part.CanCollide = false end end
+                end
+            end
+        end
+
+    end)
+end)
