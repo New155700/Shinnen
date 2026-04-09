@@ -7,9 +7,9 @@ local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 -- [ 📋 ตารางแมพ (ล็อค ID ให้ตรงไฟล์) ]
 local MapConfig = {
-    [113745337705295] "Games1.lua", -- ID แมพตำรวจจับโจร
+    [113745337705295] = "Games1.lua", -- ID แมพตำรวจจับโจร
     [142823291] = "Games2.lua", -- ID แมพ Murder Mystery 2 หลัก
-    [14469379009] = "Games3.lua", -- ID แมพทดสอบที่พี่ใช้
+    [14469379009] = "Games3.lua", -- ID แมพแข่งกันกินอาหารเป็นทีม
 }
 
 -- ระบบล้าง UI เก่าป้องกันบัค
