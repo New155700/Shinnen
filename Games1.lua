@@ -420,10 +420,13 @@ RunService.Stepped:Connect(function()
             end
         end
         
-        if getgenv().Attach_Behind_Under then
+                if getgenv().Attach_Behind_Under then
             local target = Players:FindFirstChild(getgenv().Warp_Target_Name)
             if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
                 local tRoot = target.Character.HumanoidRootPart
                 char.HumanoidRootPart.CFrame = tRoot.CFrame * CFrame.new(0, -8, 5)
                 char.HumanoidRootPart.Velocity = Vector3.zero
-                plr.DevCameraOccl
+            end
+        end
+    end)
+end)
