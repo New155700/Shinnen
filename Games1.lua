@@ -19,8 +19,8 @@ getgenv().Show_Bounty = false
 getgenv().FOV_Enabled = false
 getgenv().FOV_Size = 150
 getgenv().Aimbot_Enabled = false
-getgenv().Aimbot_Smoothness = 0.5
-getgenv().Prediction_Factor = 0.165 
+getgenv().Aimbot_Smoothness = 1     
+getgenv().Prediction_Factor = 0     
 getgenv().WallCheck_Enabled = false 
 getgenv().Lock_In_Vehicle = false 
 getgenv().Speed_Enabled = false
@@ -31,11 +31,15 @@ getgenv().AutoE_Enabled = false
 getgenv().Warp_Target_Name = "Select Player"
 getgenv().Attach_Head = false
 getgenv().Attach_Behind_Under = false 
+getgenv().SilentAim_Enabled = false
+
+local CurrentAimTarget = nil
+local CurrentPredictedPos = nil
 
 -- พิกัดสถานที่
 local MapLocations = {
     Store = CFrame.new(841.36, -30.87, -460.57),
-    Jewelry = CFrame.new(262.31, -38.00, -1683.00), -- ยืนบนบันไดพอดี
+    Jewelry = CFrame.new(262.31, -38.00, -1683.00),
     GunStore = CFrame.new(-171.59, -30.34, -1262.56),
     BankTop = CFrame.new(664.56, -7.42, -1258.93),
     CriminalBase = CFrame.new(370.36, 45.00, -2974.59) 
@@ -52,6 +56,15 @@ FOV_Gui = Instance.new("ScreenGui", CoreGui); FOV_Gui.Name = "N_FOV_GUI"; FOV_Gu
 local FOV_Frame = Instance.new("Frame", FOV_Gui); FOV_Frame.AnchorPoint = Vector2.new(0.5, 0.5); FOV_Frame.Position = UDim2.new(0.5, 0, 0.5, 0); FOV_Frame.BackgroundTransparency = 1
 local FOV_Stroke = Instance.new("UIStroke", FOV_Frame); FOV_Stroke.Thickness = 2
 local FOV_Corner = Instance.new("UICorner", FOV_Frame); FOV_Corner.CornerRadius = UDim.new(1, 0)
+
+-- Lock Line
+local LockLineFrame = Instance.new("Frame", FOV_Gui)
+LockLineFrame.Name = "N_LOCKLINE"
+LockLineFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+LockLineFrame.ZIndex = 10
+LockLineFrame.BorderSizePixel = 0
+LockLineFrame.BackgroundColor3 = Color3.fromRGB(255, 0, 0) 
+LockLineFrame.Visible = false
 
 local ESP_Folder = CoreGui:FindFirstChild("N_ESP_FOLDER")
 if ESP_Folder then ESP_Folder:Destroy() end
@@ -84,54 +97,52 @@ E_Button.Visible = false
 local dragging, dragInput, dragStart, startPos
 E_Button.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = E_Button.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
+        dragging = true; dragStart = input.Position; startPos = E_Button.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
     end
 end)
-E_Button.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
+E_Button.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        E_Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        local delta = input.Position - dragStart; E_Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 E_Button.MouseButton1Click:Connect(function()
     getgenv().AutoE_Enabled = not getgenv().AutoE_Enabled
-    if getgenv().AutoE_Enabled then
-        E_Button.Text = "⚡\nAuto E\n[ON]"
-        E_Button.TextColor3 = Color3.fromRGB(100, 255, 100)
-    else
-        E_Button.Text = "⚡\nAuto E\n[OFF]"
-        E_Button.TextColor3 = Color3.fromRGB(255, 100, 100)
-    end
+    E_Button.Text = getgenv().AutoE_Enabled and "⚡\nAuto E\n[ON]" or "⚡\nAuto E\n[OFF]"
+    E_Button.TextColor3 = getgenv().AutoE_Enabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
 end)
 
+-- [ ✨ อัปเกรดระบบ Auto E (ไม่ดูดขึ้นรถ) ]
 ProximityPromptService.PromptShown:Connect(function(prompt)
-    if getgenv().AutoE_Enabled then
-        prompt.HoldDuration = 0
-        prompt:InputHoldBegin()
-        task.wait(0.05)
-        prompt:InputHoldEnd()
+    if getgenv().AutoE_Enabled then 
+        local text = (prompt.ActionText .. " " .. prompt.ObjectText):lower()
+        local isVehicle = false
+        
+        -- เช็คว่าเป็นรถ หรือ ที่นั่ง หรือไม่
+        if text:find("drive") or text:find("passenger") or text:find("seat") or text:find("enter") then
+            isVehicle = true
+        end
+        if prompt.Parent and (prompt.Parent:IsA("VehicleSeat") or prompt.Parent:IsA("Seat")) then
+            isVehicle = true
+        end
+
+        prompt.HoldDuration = 0 -- ปรับให้กดทีเดียวติดทุกอย่าง (ไม่ต้องรอ)
+        
+        if not isVehicle then
+            -- ถ้าไม่ใช่รถ ให้กดปุ่มออโต้เลย (Auto Rob / Pick up)
+            prompt:InputHoldBegin()
+            task.wait(0.05)
+            prompt:InputHoldEnd()
+        end
     end
 end)
 
 -- [ 🔵 HELPER FUNCTIONS ]
 local function GetPlayersList()
-    local t = {} 
-    local sortedNames = {}
-    for _, v in pairs(Players:GetPlayers()) do 
-        if v ~= plr then table.insert(sortedNames, v.Name) end 
-    end
-    table.sort(sortedNames) 
-    for _, name in ipairs(sortedNames) do table.insert(t, name) end
+    local t = {}; local sortedNames = {}
+    for _, v in pairs(Players:GetPlayers()) do if v ~= plr then table.insert(sortedNames, v.Name) end end
+    table.sort(sortedNames); for _, name in ipairs(sortedNames) do table.insert(t, name) end
     return t
 end
 
@@ -156,24 +167,19 @@ local function IsVisible(targetChar)
 end
 
 local function GetClosestPlayerInFOV()
-    local closestPlayer = nil
-    local shortestDistance = getgenv().FOV_Size
+    local closestPlayer = nil; local shortestDistance = getgenv().FOV_Size
     local centerPos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= plr and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
-            local isSitting = p.Character.Humanoid.Sit
-            if isSitting and not getgenv().Lock_In_Vehicle then continue end
+            if p.Character.Humanoid.Sit and not getgenv().Lock_In_Vehicle then continue end
             local targetPart = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HumanoidRootPart")
             if targetPart then
                 local pos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
                 if onScreen and pos.Z > 0 then
                     local dist = (Vector2.new(pos.X, pos.Y) - centerPos).Magnitude
-                    if dist <= shortestDistance then
-                        if IsVisible(p.Character) then
-                            shortestDistance = dist
-                            closestPlayer = p
-                        end
+                    if dist <= shortestDistance and IsVisible(p.Character) then
+                        shortestDistance = dist; closestPlayer = p
                     end
                 end
             end
@@ -182,17 +188,13 @@ local function GetClosestPlayerInFOV()
     return closestPlayer
 end
 
-local function GetPlayerColor(p)
-    return p.Team and p.TeamColor.Color or Color3.fromRGB(255, 255, 255) 
-end
+local function GetPlayerColor(p) return p.Team and p.TeamColor.Color or Color3.fromRGB(255, 255, 255) end
 
 local function GetPredictedPosition(target)
     if not target or not target.Character then return nil end
-    local head = target.Character:FindFirstChild("Head")
-    local hrp = target.Character:FindFirstChild("HumanoidRootPart")
-    local aimPart = head or hrp
+    local aimPart = target.Character:FindFirstChild("Head") or target.Character:FindFirstChild("HumanoidRootPart")
     if aimPart then
-        local velocity = hrp and hrp.Velocity or aimPart.Velocity
+        local velocity = target.Character.HumanoidRootPart and target.Character.HumanoidRootPart.Velocity or aimPart.Velocity
         return aimPart.Position + (velocity * getgenv().Prediction_Factor)
     end
     return nil
@@ -201,18 +203,15 @@ end
 local function GetPlayerBounty(p)
     local bounty = 0
     pcall(function()
-        if p:FindFirstChild("leaderstats") and p.leaderstats:FindFirstChild("Bounty") then
-            bounty = tonumber(p.leaderstats.Bounty.Value) or 0
-        elseif p:FindFirstChild("Bounty") then
-            bounty = tonumber(p.Bounty.Value) or 0
-        end
+        if p:FindFirstChild("leaderstats") and p.leaderstats:FindFirstChild("Bounty") then bounty = tonumber(p.leaderstats.Bounty.Value) or 0
+        elseif p:FindFirstChild("Bounty") then bounty = tonumber(p.Bounty.Value) or 0 end
     end)
     return bounty
 end
 
 local function SafeToggle(v) if type(v) == "boolean" then return v elseif type(v) == "table" then return v[1] == true end return false end
 
--- [ 🛡️ BYPASS HOOKS ]
+-- [ 🛡️ BYPASS & MAGIC BULLET HOOKS ]
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
 local oldNewIndex = mt.__newindex
@@ -224,9 +223,40 @@ mt.__newindex = newcclosure(function(t, k, v)
     return oldNewIndex(t, k, v)
 end)
 
+mt.__index = newcclosure(function(t, k)
+    if getgenv().SilentAim_Enabled and t == Mouse and (k == "Hit" or k == "Target") then
+        if CurrentPredictedPos and CurrentAimTarget and CurrentAimTarget.Character then
+            if k == "Hit" then return CFrame.new(CurrentPredictedPos) end
+            if k == "Target" then return CurrentAimTarget.Character:FindFirstChild("Head") or CurrentAimTarget.Character:FindFirstChild("HumanoidRootPart") end
+        end
+    end
+    return oldIndex(t, k)
+end)
+
 mt.__namecall = newcclosure(function(self, ...)
     local method = getnamecallmethod()
+    local args = {...}
+    
     if not checkcaller() and (method == "Kick" or method == "kick") then return end
+    
+    if getgenv().SilentAim_Enabled and not checkcaller() and CurrentPredictedPos then
+        if method == "ScreenPointToRay" or method == "ViewportPointToRay" then
+            local originalRay = oldNamecall(self, ...)
+            return Ray.new(originalRay.Origin, (CurrentPredictedPos - originalRay.Origin).Unit * 1000)
+        elseif method == "Raycast" and typeof(args[1]) == "Vector3" and typeof(args[2]) == "Vector3" then
+            local origin = args[1]
+            local originalDirection = args[2]
+            local mag = originalDirection.Magnitude
+            args[2] = (CurrentPredictedPos - origin).Unit * mag
+            return oldNamecall(self, unpack(args))
+        elseif string.find(method, "FindPartOnRay") and typeof(args[1]) == "Ray" then
+            local origin = args[1].Origin
+            local mag = args[1].Direction.Magnitude
+            args[1] = Ray.new(origin, (CurrentPredictedPos - origin).Unit * mag)
+            return oldNamecall(self, unpack(args))
+        end
+    end
+    
     return oldNamecall(self, ...)
 end)
 setreadonly(mt, true)
@@ -245,18 +275,27 @@ FovSec:CreateSlider("ขนาด FOV", 50, 600, 150, function(v) getgenv().FOV_
 local AimTab = Win:CreateTab("🔫 Combat & GodMode")
 local AimSec = AimTab:CreateSection("ระบบเล็ง & Aimbot")
 AimSec:CreateToggle("🎯 Aimbot (ล็อคหัวเป้าหมาย)", function(v) getgenv().Aimbot_Enabled = SafeToggle(v) end)
+AimSec:CreateToggle("🎯 Magic Bullet (กระสุนเลี้ยวเข้าตัว)", function(v) getgenv().SilentAim_Enabled = SafeToggle(v) end)
 AimSec:CreateToggle("🚧 เช็คกำแพง (Wall Check)", function(v) getgenv().WallCheck_Enabled = SafeToggle(v) end)
 AimSec:CreateToggle("🚗 ล็อคคนในรถ", function(v) getgenv().Lock_In_Vehicle = SafeToggle(v) end)
-AimSec:CreateSlider("ความสมูทกล้อง", 1, 100, 50, function(v) getgenv().Aimbot_Smoothness = (tonumber(v) or 50) / 100 end)
-AimSec:CreateSlider("ค่าดักหน้า (Prediction)", 0, 50, 16, function(v) getgenv().Prediction_Factor = (tonumber(v) or 16) / 100 end)
+AimSec:CreateSlider("ความสมูทกล้อง", 1, 100, 100, function(v) getgenv().Aimbot_Smoothness = (tonumber(v) or 100) / 100 end)
+AimSec:CreateSlider("ค่าดักหน้า (Prediction)", 0, 50, 0, function(v) getgenv().Prediction_Factor = (tonumber(v) or 0) / 100 end)
 
 local GodSec = AimTab:CreateSection("ระดับพระเจ้า (God Tier)")
 GodSec:CreateToggle("👻 กันดาเมจ/กันเลเซอร์ (ตัวไม่ล่องหน)", function(v) 
     getgenv().GodMode_Enabled = SafeToggle(v) 
     if not getgenv().GodMode_Enabled and plr.Character then
-        for _, p in pairs(plr.Character:GetDescendants()) do
-            if p:IsA("BasePart") then p.CanTouch = true end
-        end
+        for _, p in pairs(plr.Character:GetDescendants()) do if p:IsA("BasePart") then p.CanTouch = true end end
+    end
+end)
+
+-- [ ✨ เพิ่มปุ่มในเมนู UI สำหรับ Auto E ]
+GodSec:CreateToggle("⚡ เปิด Auto E (ปล้นไว/ไม่ดูดเข้ารถ)", function(v) 
+    getgenv().AutoE_Enabled = SafeToggle(v)
+    -- ซิงค์ให้ปุ่มลอยหน้าจอเปลี่ยนสถานะตามด้วย
+    if E_Button then
+        E_Button.Text = getgenv().AutoE_Enabled and "⚡\nAuto E\n[ON]" or "⚡\nAuto E\n[OFF]"
+        E_Button.TextColor3 = getgenv().AutoE_Enabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
     end
 end)
 GodSec:CreateToggle("🔘 แสดงปุ่ม Auto E (ลอยหน้าจอลากได้)", function(v) E_Button.Visible = SafeToggle(v) end)
@@ -291,29 +330,18 @@ MapSec:CreateButton("🦹 ฐานโจร", function() plr.Character.Humanoid
 -- [ 🚀 ENGINE LOOPS ]
 local function CreateESP(p)
     if p == plr then return end
-    
-    if not Tracers[p] then
-        local line = Instance.new("Frame", ESP_Folder); line.AnchorPoint = Vector2.new(0.5, 0.5); line.BorderSizePixel = 0; line.ZIndex = 1; line.Visible = false
-        Tracers[p] = line
-    end
-    if not Highlights[p] then
-        local hl = Instance.new("Highlight", CoreGui); hl.FillTransparency = 0.7; hl.OutlineTransparency = 0.2; hl.Enabled = false
-        Highlights[p] = hl
-    end
+    if not Tracers[p] then local line = Instance.new("Frame", ESP_Folder); line.AnchorPoint = Vector2.new(0.5, 0.5); line.BorderSizePixel = 0; line.ZIndex = 1; line.Visible = false; Tracers[p] = line end
+    if not Highlights[p] then local hl = Instance.new("Highlight", CoreGui); hl.FillTransparency = 0.7; hl.OutlineTransparency = 0.2; hl.Enabled = false; Highlights[p] = hl end
     if not Billboards[p] then
         local bg = Instance.new("BillboardGui", ESP_Folder); bg.Size = UDim2.new(0, 200, 0, 75); bg.StudsOffset = Vector3.new(0, 3.5, 0); bg.AlwaysOnTop = true; bg.Enabled = false
         local txt = Instance.new("TextLabel", bg); txt.Size = UDim2.new(1, 0, 1, 0); txt.BackgroundTransparency = 1; txt.Font = Enum.Font.GothamBold; txt.TextSize = 14; txt.TextStrokeTransparency = 0.4
         Billboards[p] = {Gui = bg, Txt = txt}
     end
 end
-
 local function RemoveESP(p)
     if Tracers[p] then Tracers[p]:Destroy(); Tracers[p] = nil end
     if Highlights[p] then Highlights[p]:Destroy(); Highlights[p] = nil end
-    if Billboards[p] then 
-        if Billboards[p].Gui then Billboards[p].Gui:Destroy() end
-        Billboards[p] = nil 
-    end
+    if Billboards[p] then if Billboards[p].Gui then Billboards[p].Gui:Destroy() end; Billboards[p] = nil end
 end
 
 for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
@@ -323,72 +351,60 @@ Players.PlayerRemoving:Connect(RemoveESP)
 RunService.RenderStepped:Connect(function()
     pcall(function()
         local currentRGB = Color3.fromHSV((tick() % 5) / 5, 1, 1)
-        
         if FOV_Gui then
             FOV_Gui.Enabled = getgenv().FOV_Enabled
-            FOV_Frame.Size = UDim2.new(0, getgenv().FOV_Size * 2, 0, getgenv().FOV_Size * 2)
-            FOV_Stroke.Color = currentRGB
+            FOV_Frame.Size = UDim2.new(0, getgenv().FOV_Size * 2, 0, getgenv().FOV_Size * 2); FOV_Stroke.Color = currentRGB
         end
-        
         if CountText.Visible then
             local police, criminal = 0, 0
             for _, p in ipairs(Players:GetPlayers()) do
                 if p.Team then
                     local n = p.Team.Name:lower()
-                    if n:find("police") or n:find("cop") then police = police + 1
-                    elseif n:find("criminal") or n:find("prisoner") then criminal = criminal + 1 end
+                    if n:find("police") or n:find("cop") then police = police + 1 elseif n:find("criminal") or n:find("prisoner") then criminal = criminal + 1 end
                 end
             end
             CountText.Text = string.format("👮 ตำรวจ : %d   |   🦹 นักโทษ : %d", police, criminal); CountText.TextColor3 = currentRGB
         end
         
-        -- [ อัปเดต ESP จากโค้ดเดิม ]
         for p, tracerLine in pairs(Tracers) do
             if not p or not p.Parent or not p.Character then
-                tracerLine.Visible = false
-                if Highlights[p] then Highlights[p].Enabled = false end
-                if Billboards[p] then Billboards[p].Gui.Enabled = false end
+                tracerLine.Visible = false; if Highlights[p] then Highlights[p].Enabled = false end; if Billboards[p] then Billboards[p].Gui.Enabled = false end
                 continue
             end
-
             local char = p.Character; local aimPart = char and (char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart"))
             if getgenv().ESP_Enabled and char and aimPart and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
                 local pos, onScreen = Camera:WorldToViewportPoint(aimPart.Position); local pColor = GetPlayerColor(p)
-                
-                -- เช็ค pos.Z > 0 กันเส้นชี้ขึ้นฟ้า
                 if getgenv().Show_Tracer and onScreen and pos.Z > 0 then
-                    tracerLine.Visible = true; tracerLine.BackgroundColor3 = currentRGB; DrawLine(tracerLine, Vector2.new(Camera.ViewportSize.X/2, 65), Vector2.new(pos.X, pos.Y))
-                else 
-                    tracerLine.Visible = false 
-                end
+                    tracerLine.Visible = true; tracerLine.BackgroundColor3 = currentRGB; 
+                    DrawLine(tracerLine, Vector2.new(Camera.ViewportSize.X/2, 65), Vector2.new(pos.X, pos.Y))
+                else tracerLine.Visible = false end
                 
-                if Highlights[p] then
-                    Highlights[p].Enabled = true; Highlights[p].Adornee = char; Highlights[p].FillColor = pColor
-                end
-                
+                if Highlights[p] then Highlights[p].Enabled = true; Highlights[p].Adornee = char; Highlights[p].FillColor = pColor end
                 if Billboards[p] then
                     Billboards[p].Gui.Enabled = true; Billboards[p].Gui.Adornee = aimPart; local dist = math.floor((Camera.CFrame.Position - aimPart.Position).Magnitude)
                     local bTxt = getgenv().Show_Bounty and GetPlayerBounty(p) > 0 and "\n💰 [$"..GetPlayerBounty(p).."]" or ""
                     Billboards[p].Txt.Text = p.Name.."\n["..dist.."m]"..bTxt; Billboards[p].Txt.TextColor3 = pColor
                 end
             else 
-                tracerLine.Visible = false; 
-                if Highlights[p] then Highlights[p].Enabled = false end
-                if Billboards[p] then Billboards[p].Gui.Enabled = false end
+                tracerLine.Visible = false; if Highlights[p] then Highlights[p].Enabled = false end; if Billboards[p] then Billboards[p].Gui.Enabled = false end
             end
         end
         
-        -- [ Aimbot ล็อคหัว จากโค้ดเดิม ]
-        local currentTarget = GetClosestPlayerInFOV()
-        if currentTarget and getgenv().Aimbot_Enabled then
-            local predPos = GetPredictedPosition(currentTarget)
-            if predPos then 
-                -- เช็คให้ชัวร์ว่าตัวเป้าหมายอยู่ข้างหน้ากล้อง
-                local pos, onScreen = Camera:WorldToViewportPoint(predPos)
-                if onScreen and pos.Z > 0 then
-                    Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, predPos), getgenv().Aimbot_Smoothness) 
-                end
-            end
+        CurrentAimTarget = GetClosestPlayerInFOV()
+        CurrentPredictedPos = GetPredictedPosition(CurrentAimTarget)
+        
+        if CurrentAimTarget and (getgenv().Aimbot_Enabled or getgenv().SilentAim_Enabled) and CurrentPredictedPos then
+            local pos, onScreen = Camera:WorldToViewportPoint(CurrentPredictedPos)
+            if onScreen and pos.Z > 0 then
+                LockLineFrame.Visible = true
+                local centerScreen = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+                DrawLine(LockLineFrame, centerScreen, Vector2.new(pos.X, pos.Y))
+            else LockLineFrame.Visible = false end
+        else LockLineFrame.Visible = false end
+
+        if CurrentAimTarget and getgenv().Aimbot_Enabled and CurrentPredictedPos then
+            local pos, onScreen = Camera:WorldToViewportPoint(CurrentPredictedPos)
+            if onScreen and pos.Z > 0 then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, CurrentPredictedPos), getgenv().Aimbot_Smoothness) end
         end
     end)
 end)
@@ -397,36 +413,8 @@ RunService.Stepped:Connect(function()
     pcall(function()
         local char = plr.Character; if not char then return end
         char.Humanoid.WalkSpeed = getgenv().Speed_Enabled and getgenv().WalkSpeed or 16
-        
         if getgenv().Noclip_Enabled or getgenv().Attach_Behind_Under then
-            for _, v in pairs(char:GetDescendants()) do 
-                if v:IsA("BasePart") then v.CanCollide = false end 
-            end
-        end
-
-        if getgenv().GodMode_Enabled then
-            for _, v in pairs(char:GetDescendants()) do
-                if v:IsA("BasePart") and v.CanTouch then
-                    v.CanTouch = false 
-                end
-            end
-        end
-        
-        if getgenv().Attach_Head then
-            local target = Players:FindFirstChild(getgenv().Warp_Target_Name)
-            if target and target.Character and target.Character:FindFirstChild("Head") then
-                char.HumanoidRootPart.CFrame = target.Character.Head.CFrame * CFrame.new(0, 3, 0)
-                char.HumanoidRootPart.Velocity = Vector3.zero
-            end
-        end
-        
-                if getgenv().Attach_Behind_Under then
-            local target = Players:FindFirstChild(getgenv().Warp_Target_Name)
-            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                local tRoot = target.Character.HumanoidRootPart
-                char.HumanoidRootPart.CFrame = tRoot.CFrame * CFrame.new(0, -8, 5)
-                char.HumanoidRootPart.Velocity = Vector3.zero
-            end
+            for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
         end
     end)
 end)
