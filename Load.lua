@@ -1,4 +1,3 @@
--- [[ SHINNEN HUB | MASTER LOADER V6 : MM2 EDITION ]] --
 local plr = game:GetService("Players").LocalPlayer
 local currentId = game.PlaceId 
 
