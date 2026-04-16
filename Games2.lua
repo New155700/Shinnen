@@ -1,4 +1,4 @@
-local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/ca3ee71cb4c922c5055bca31b4fa9578/raw/145adea59e4bfc4c4273b7e8b6b925d8969cae49/HIUISHINNEN"))()
+local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/d2950ed16e81d765a8657c180920cc46/raw/12746d9f8836260f1998a453849e87d21c594a5c/HISHINUI"))()
 local Win = Library:CreateWindow("🔥 N-SHINNEN ")
 
 local Players = game:GetService("Players")
@@ -9,46 +9,44 @@ local Camera = workspace.CurrentCamera
 local plr = Players.LocalPlayer
 local Mouse = plr:GetMouse()
 
--- [ ลบ GUI ของเดิมถ้ามีอยู่แล้ว ]
-local FOV_Gui = CoreGui:FindFirstChild("N_FOV_GUI")
-if FOV_Gui then FOV_Gui:Destroy() end
-
-local Persistent_Gui = CoreGui:FindFirstChild("N_Persistent_GUI")
-if Persistent_Gui then Persistent_Gui:Destroy() end
+-- [ ลบ GUI ของเดิมถ้ามีอยู่แล้ว เพื่อป้องกันบั๊กทับซ้อน ]
+pcall(function()
+    local oldFOV = CoreGui:FindFirstChild("N_FOV_GUI")
+    if oldFOV then oldFOV:Destroy() end
+    local oldPersistent = CoreGui:FindFirstChild("N_Persistent_GUI")
+    if oldPersistent then oldPersistent:Destroy() end
+end)
 
 -- [ สร้างวงกลม FOV ]
-FOV_Gui = Instance.new("ScreenGui")
+local FOV_Gui = Instance.new("ScreenGui")
 FOV_Gui.Name = "N_FOV_GUI"
 FOV_Gui.Parent = CoreGui
 FOV_Gui.Enabled = false
 FOV_Gui.IgnoreGuiInset = true
 
-local FOV_Frame = Instance.new("Frame")
-FOV_Frame.Parent = FOV_Gui
+local FOV_Frame = Instance.new("Frame", FOV_Gui)
 FOV_Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 FOV_Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 FOV_Frame.BackgroundTransparency = 1
 
-local FOV_Stroke = Instance.new("UIStroke")
-FOV_Stroke.Parent = FOV_Frame
+local FOV_Stroke = Instance.new("UIStroke", FOV_Frame)
 FOV_Stroke.Thickness = 2
 
-local FOV_Corner = Instance.new("UICorner")
-FOV_Corner.Parent = FOV_Frame
+local FOV_Corner = Instance.new("UICorner", FOV_Frame)
 FOV_Corner.CornerRadius = UDim.new(1, 0)
 
--- [ สร้าง GUI นับจำนวนคนเล่น (ด้านบนกลาง) - ปรับขนาดใหญ่ขึ้น ]
-Persistent_Gui = Instance.new("ScreenGui", CoreGui)
+-- [ สร้าง GUI นับจำนวนคนเล่น ]
+local Persistent_Gui = Instance.new("ScreenGui", CoreGui)
 Persistent_Gui.Name = "N_Persistent_GUI"
 Persistent_Gui.IgnoreGuiInset = true
 
 local PlayerCountTxt = Instance.new("TextLabel", Persistent_Gui)
 PlayerCountTxt.Size = UDim2.new(0, 200, 0, 30)
-PlayerCountTxt.Position = UDim2.new(0.5, -100, 0, 15) -- ตรงกลางด้านบน
+PlayerCountTxt.Position = UDim2.new(0.5, -100, 0, 15)
 PlayerCountTxt.BackgroundTransparency = 1
-PlayerCountTxt.TextStrokeTransparency = 0 -- ขอบดำให้มองง่าย
+PlayerCountTxt.TextStrokeTransparency = 0
 PlayerCountTxt.Font = Enum.Font.SourceSansBold
-PlayerCountTxt.TextSize = 26 -- ขยายขนาดใหญ่ขึ้น
+PlayerCountTxt.TextSize = 26
 
 -- [ โฟลเดอร์สำหรับ ESP ]
 local ESP_Folder = CoreGui:FindFirstChild("N_ESP_FOLDER") or Instance.new("Folder", CoreGui)
@@ -89,11 +87,16 @@ local Orbit_Angle = 0
 local CurrentAimTarget = nil
 local CurrentPredictedPos = nil
 
--- ตารางเก็บเส้น Tracer และสีของแต่ละคน
 local Tracers = {}
 local PlayerColors = {}
 
--- [ ฟังก์ชันเช็คบทบาท ]
+-- [ ฟังก์ชันเพื่อความเสถียร ]
+local function SafeToggle(val)
+    if type(val) == "boolean" then return val end
+    if type(val) == "table" then return val[1] == true end
+    return false
+end
+
 local function GetRole(p)
     if not p then return "ผู้บริสุทธิ์", Color3.fromRGB(240, 240, 245) end 
     local isM, isS = false, false
@@ -115,12 +118,11 @@ local function GetRole(p)
     return "ผู้บริสุทธิ์", Color3.fromRGB(240, 240, 245) 
 end
 
--- [ ฟังก์ชันคำนวณการเคลื่อนที่ล่วงหน้า ]
 local function GetPredictedPosition(target)
     if not target or not target.Character then return nil end
     local hrp = target.Character:FindFirstChild("HumanoidRootPart")
     local hum = target.Character:FindFirstChild("Humanoid")
-    if hrp and hum then
+    if hrp and hum and hum.Health > 0 then
         local velocity = hrp.Velocity
         local moveDir = hum.MoveDirection
         local pred = velocity * getgenv().Prediction_Factor
@@ -132,7 +134,6 @@ local function GetPredictedPosition(target)
     return nil
 end
 
--- [ ฟังก์ชันเช็คกำแพง ]
 local function IsVisible(targetChar)
     if not plr.Character or not targetChar then return false end
     local origin = Camera.CFrame.Position
@@ -149,7 +150,6 @@ local function IsVisible(targetChar)
     return not result
 end
 
--- [ ฟังก์ชันหาคนที่ใกล้เป้าที่สุดใน FOV ]
 local function GetClosestPlayerInFOV()
     local closestPlayer = nil
     local shortestDistance = getgenv().FOV_Size
@@ -160,10 +160,7 @@ local function GetClosestPlayerInFOV()
             local pos, onScreen = Camera:WorldToViewportPoint(p.Character.HumanoidRootPart.Position)
             if onScreen then
                 local isVis = true
-                if getgenv().WallCheck_Enabled then
-                    isVis = IsVisible(p.Character)
-                end
-                
+                if getgenv().WallCheck_Enabled then isVis = IsVisible(p.Character) end
                 if isVis then
                     local distance = (Vector2.new(pos.X, pos.Y) - centerPosition).Magnitude
                     if distance < shortestDistance then
@@ -192,10 +189,8 @@ local function CleanupESP(p)
             if p.Character:FindFirstChild("N_HL") then p.Character.N_HL:Destroy() end
             local cBox = hrp and hrp:FindFirstChild("N_CustomHitbox")
             if cBox then cBox:Destroy() end
-            -- ลบ 3D Tracer เก่าที่อาจจะค้างอยู่
             if hrp and hrp:FindFirstChild("N_Tracer") then hrp.N_Tracer:Destroy() end
         end
-        -- ลบเส้น 2D Tracer ออก
         if Tracers[p] then
             Tracers[p]:Remove()
             Tracers[p] = nil
@@ -204,13 +199,9 @@ local function CleanupESP(p)
     end)
 end
 
-local function SafeToggle(val)
-    if type(val) == "boolean" then return val end
-    if type(val) == "table" then return val[1] == true end
-    return false
-end
-
+-- ==========================================
 -- [ ส่วนของเมนู GUI ]
+-- ==========================================
 local VisualTab = Win:CreateTab("👁️ ESP & Visuals")
 local EspSec = VisualTab:CreateSection("ระบบมองทะลุ & หน้าจอ")
 EspSec:CreateToggle("เปิด ESP (ชื่อ+ตัวใส)", function(v) getgenv().ESP_Enabled = SafeToggle(v); if not getgenv().ESP_Enabled then for _, p in pairs(Players:GetPlayers()) do CleanupESP(p) end end end)
@@ -219,7 +210,7 @@ EspSec:CreateToggle("แสดงวงกลม FOV (สีรุ้ง)", func
 EspSec:CreateSlider("ขนาด FOV", 50, 500, 150, function(v) getgenv().FOV_Size = tonumber(v) or 150 end)
 
 local AimTab = Win:CreateTab("🔫 Aim & Target")
-local TargetSec = AimTab:CreateSection("🎯 ล็อคเป้าหมาย (สำหรับวาร์ป/เส้นโยง)")
+local TargetSec = AimTab:CreateSection("🎯 ล็อคเป้าหมาย")
 local PlayerDrop = TargetSec:CreateDropdown("รายชื่อผู้เล่น", GetPlayersList(), function(v) 
     if v == "[ Auto-Lock Murderer ]" then getgenv().AutoLock_Murderer = true; getgenv().Orbit_Target = nil
     elseif v == "[ Reset Target ]" then getgenv().AutoLock_Murderer = false; getgenv().Orbit_Target = nil
@@ -244,166 +235,184 @@ MoveSec:CreateSlider("ความเร็วเดิน", 16, 150, 16, functi
 MoveSec:CreateToggle("กันคนเดินชน (Anti-Bump)", function(v) getgenv().AntiBump_Enabled = SafeToggle(v) end)
 MoveSec:CreateToggle("เดินทะลุกำแพง (Noclip)", function(v) getgenv().Noclip_Enabled = SafeToggle(v) end)
 
+-- [ เพิ่มปุ่มวาร์ปและรีเซ็ต ]
 local WarpSec = MoveTab:CreateSection("🌀 ระบบวาร์ป (ตามเป้าหมายที่เลือก)")
-WarpSec:CreateToggle("Head TP (เกาะบนหัว)", function(v) getgenv().Follow_Enabled = SafeToggle(v) end)
-WarpSec:CreateToggle("Orbit Mode (หมุนรอบตัว)", function(v) getgenv().Orbit_Enabled = SafeToggle(v) end)
+WarpSec:CreateToggle("Head TP (เกาะบนหัวเป้าหมาย)", function(v) getgenv().Follow_Enabled = SafeToggle(v) end)
+WarpSec:CreateToggle("Orbit Mode (หมุนรอบตัวเป้าหมาย)", function(v) getgenv().Orbit_Enabled = SafeToggle(v) end)
 
--- [ แก้ปัญหากล้องซูมเข้าออกเวลาชนกำแพง/เข้าห้องเล็ก ]
+WarpSec:CreateButton("⚡ วาร์ปไปหาเป้าหมายทันที", function()
+    pcall(function()
+        local target = getgenv().Orbit_Target
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                -- วาร์ปไปด้านหลังเป้าหมาย 3 Studs
+                plr.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+            end
+        end
+    end)
+end)
+
+WarpSec:CreateButton("💀 รีเซ็ตตัวละคร (ฆ่าตัวตาย)", function()
+    pcall(function()
+        if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+            plr.Character.Humanoid.Health = 0
+        end
+    end)
+end)
+
+-- ==========================================
+-- [ อัปเดตลูปการทำงานต่างๆ ให้เสถียรขึ้น ]
+-- ==========================================
+
+-- แก้ปัญหากล้องซูมเข้าออกเวลาชนกำแพง
 task.spawn(function()
     while task.wait(1) do
         pcall(function()
             if plr then
-                -- บังคับให้กำแพงโปร่งใสแทนการดึงกล้องซูมเข้าตัว
                 plr.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Invisicam
             end
         end)
     end
 end)
 
--- [ ระบบอัปเดตแบบทุกเฟรม (Aimbot & FOV & สีรุ้ง PlayerCount & เส้น Tracer) ]
-RunService:BindToRenderStep("N_Aimbot", Enum.RenderPriority.Camera.Value + 1, function()
-    -- ทำข้อความจำนวนคนให้เป็นสีรุ้ง RGB ตลอดเวลา
-    if PlayerCountTxt then
-        PlayerCountTxt.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-    end
+-- ระบบ Render แบบเฟรมต่อเฟรม (UI/Aimbot/Tracers)
+RunService:BindToRenderStep("N_Aimbot_Render", Enum.RenderPriority.Camera.Value + 1, function()
+    pcall(function()
+        local hue = tick() % 5 / 5
+        local rainbowColor = Color3.fromHSV(hue, 1, 1)
 
-    if FOV_Gui then
-        FOV_Gui.Enabled = getgenv().Show_FOV
-        FOV_Frame.Size = UDim2.new(0, getgenv().FOV_Size * 2, 0, getgenv().FOV_Size * 2)
-        -- อัปเดตสี FOV สีรุ้งตลอดเวลา
-        FOV_Stroke.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-    end
+        if PlayerCountTxt then PlayerCountTxt.TextColor3 = rainbowColor end
 
-    CurrentAimTarget = GetClosestPlayerInFOV()
-    if CurrentAimTarget then
-        CurrentPredictedPos = GetPredictedPosition(CurrentAimTarget)
-    else
-        CurrentPredictedPos = nil
-    end
+        if FOV_Gui then
+            FOV_Gui.Enabled = getgenv().Show_FOV
+            FOV_Frame.Size = UDim2.new(0, getgenv().FOV_Size * 2, 0, getgenv().FOV_Size * 2)
+            FOV_Stroke.Color = rainbowColor
+        end
 
-    -- วาดเส้นสีแดงชี้เป้า (Aimbot Line) กลางจอ
-    if getgenv().SilentAim_Enabled and CurrentAimTarget and CurrentAimTarget.Character and CurrentAimTarget.Character:FindFirstChild("HumanoidRootPart") then
-        local pos, onScreen = Camera:WorldToViewportPoint(CurrentAimTarget.Character.HumanoidRootPart.Position)
-        if onScreen then
-            TargetLine.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-            TargetLine.To = Vector2.new(pos.X, pos.Y)
-            TargetLine.Visible = true
+        CurrentAimTarget = GetClosestPlayerInFOV()
+        if CurrentAimTarget then
+            CurrentPredictedPos = GetPredictedPosition(CurrentAimTarget)
+        else
+            CurrentPredictedPos = nil
+        end
+
+        if getgenv().SilentAim_Enabled and CurrentAimTarget and CurrentAimTarget.Character and CurrentAimTarget.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(CurrentAimTarget.Character.HumanoidRootPart.Position)
+            if onScreen then
+                TargetLine.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+                TargetLine.To = Vector2.new(pos.X, pos.Y)
+                TargetLine.Visible = true
+            else
+                TargetLine.Visible = false
+            end
         else
             TargetLine.Visible = false
         end
-    else
-        TargetLine.Visible = false
-    end
 
-    if getgenv().Aimbot_Enabled and CurrentPredictedPos then
-        Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, CurrentPredictedPos), getgenv().Aimbot_Smoothness)
-    end
-
-    -- [ ระบบวาดเส้น Tracer ให้ออกมาจากข้อความจำนวนคนด้านบนกลางจอ ]
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= plr then
-            -- สร้างเส้นถ้ายังไม่มี
-            if not Tracers[p] then
-                local line = Drawing.new("Line")
-                line.Thickness = 1.5
-                line.Transparency = 1
-                Tracers[p] = line
-            end
-            
-            local tracer = Tracers[p]
-            local char = p.Character
-
-            if getgenv().ESP_Enabled and getgenv().Show_Tracer and char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-                local pos, onScreen = Camera:WorldToViewportPoint(char.HumanoidRootPart.Position)
-                if onScreen then
-                    -- โยงจากจุดกึ่งกลางด้านบนจอ (X ครึ่งจอ, Y ประมาณ 40px ลงมาจากบนสุดตรงกับตำแหน่งข้อความ)
-                    tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 40)
-                    tracer.To = Vector2.new(pos.X, pos.Y)
-                    tracer.Color = PlayerColors[p] or Color3.fromRGB(255, 255, 255)
-                    tracer.Visible = true
-                else
-                    tracer.Visible = false
-                end
-            else
-                tracer.Visible = false
-            end
-        end
-    end
-end)
-
--- [ ระบบวาด ESP, อัปเดตจำนวนคน และ Hitbox ]
-task.spawn(function()
-    while task.wait(0.1) do
-        -- อัปเดตจำนวนคนเล่น
-        if PlayerCountTxt then
-            PlayerCountTxt.Text = "ผู้เล่นทั้งหมด: " .. #Players:GetPlayers() .. " คน"
-        end
-
-        if getgenv().AutoLock_Murderer then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= plr and GetRole(p) == "ฆาตกร" then getgenv().Orbit_Target = p break end
-            end
+        if getgenv().Aimbot_Enabled and CurrentPredictedPos then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, CurrentPredictedPos), getgenv().Aimbot_Smoothness)
         end
 
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= plr then
-                pcall(function()
-                    local char = p.Character
-                    if not char then return end
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
-                    local head = char:FindFirstChild("Head")
-                    local hum = char:FindFirstChild("Humanoid")
-                    local rName, rCol = GetRole(p)
-                    
-                    -- บันทึกสีของผู้เล่นไว้ใช้กับ Tracer
-                    PlayerColors[p] = rCol
+                if not Tracers[p] then
+                    local line = Drawing.new("Line")
+                    line.Thickness = 1.5
+                    line.Transparency = 1
+                    Tracers[p] = line
+                end
+                
+                local tracer = Tracers[p]
+                local char = p.Character
 
-                    if hrp then
-                        -- ลบ 3D Beam ของเก่าที่ติดตัวผู้เล่นทิ้งให้เกลี้ยง
-                        if hrp:FindFirstChild("N_Tracer") then hrp.N_Tracer:Destroy() end
-
-                        if getgenv().HITBOX_CUSTOM then
-                            local cBox = hrp:FindFirstChild("N_CustomHitbox")
-                            if not cBox then
-                                cBox = Instance.new("Part")
-                                cBox.Name = "N_CustomHitbox"; cBox.Shape = Enum.PartType.Block
-                                cBox.Transparency = 0.65; cBox.Material = Enum.Material.ForceField
-                                cBox.CanCollide = false; cBox.Massless = true; cBox.CFrame = hrp.CFrame; cBox.Parent = hrp
-                                local weld = Instance.new("WeldConstraint")
-                                weld.Part0 = cBox; weld.Part1 = hrp; weld.Parent = cBox
-                            end
-                            cBox.Size = Vector3.new(getgenv().HitboxSize, getgenv().HitboxSize, getgenv().HitboxSize)
-                            cBox.Color = rCol
-                        else
-                            local cBox = hrp:FindFirstChild("N_CustomHitbox")
-                            if cBox then cBox:Destroy() end
-                        end
-                    end
-
-                    if getgenv().ESP_Enabled and hum and hum.Health > 0 and hrp and head then
-                        local tagName = "TAG_" .. p.Name
-                        local tag = ESP_Folder:FindFirstChild(tagName) or Instance.new("BillboardGui", ESP_Folder)
-                        tag.Name = tagName; tag.Adornee = head; tag.Size = UDim2.new(0, 200, 0, 50)
-                        tag.StudsOffset = Vector3.new(0, 1.5, 0); tag.AlwaysOnTop = true; tag.MaxDistance = math.huge
-                        
-                        local nameTxt = tag:FindFirstChild("Name") or Instance.new("TextLabel", tag)
-                        nameTxt.Name = "Name"; nameTxt.Size = UDim2.new(1, 0, 1, 0)
-                        nameTxt.BackgroundTransparency = 1; nameTxt.Text = p.Name .. "\n[" .. rName .. "]"
-                        nameTxt.TextColor3 = rCol; nameTxt.Font = Enum.Font.SourceSansBold; nameTxt.TextSize = 14; nameTxt.TextStrokeTransparency = 0.4
-                        
-                        local hl = char:FindFirstChild("N_HL") or Instance.new("Highlight", char)
-                        hl.Name = "N_HL"; hl.FillColor = rCol; hl.OutlineColor = rCol
-                        hl.FillTransparency = 0.8; hl.OutlineTransparency = 0.5; hl.Enabled = true
+                if getgenv().ESP_Enabled and getgenv().Show_Tracer and char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+                    local pos, onScreen = Camera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+                    if onScreen then
+                        tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 40)
+                        tracer.To = Vector2.new(pos.X, pos.Y)
+                        tracer.Color = PlayerColors[p] or Color3.fromRGB(255, 255, 255)
+                        tracer.Visible = true
                     else
-                        CleanupESP(p)
+                        tracer.Visible = false
                     end
-                end)
+                else
+                    tracer.Visible = false
+                end
             end
         end
+    end)
+end)
+
+-- ระบบวาด ESP, อัปเดตจำนวนคน และ Hitbox
+task.spawn(function()
+    while task.wait(0.2) do -- ปรับเป็น 0.2 ลดการทำงานซ้ำซ้อน
+        pcall(function()
+            if PlayerCountTxt then
+                PlayerCountTxt.Text = "ผู้เล่นทั้งหมด: " .. #Players:GetPlayers() .. " คน"
+            end
+
+            if getgenv().AutoLock_Murderer then
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p ~= plr and GetRole(p) == "ฆาตกร" then getgenv().Orbit_Target = p break end
+                end
+            end
+
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= plr then
+                    local char = p.Character
+                    if char then
+                        local hrp = char:FindFirstChild("HumanoidRootPart")
+                        local head = char:FindFirstChild("Head")
+                        local hum = char:FindFirstChild("Humanoid")
+                        local rName, rCol = GetRole(p)
+                        PlayerColors[p] = rCol
+
+                        if hrp then
+                            if hrp:FindFirstChild("N_Tracer") then hrp.N_Tracer:Destroy() end
+
+                            if getgenv().HITBOX_CUSTOM then
+                                local cBox = hrp:FindFirstChild("N_CustomHitbox")
+                                if not cBox then
+                                    cBox = Instance.new("Part")
+                                    cBox.Name = "N_CustomHitbox"; cBox.Shape = Enum.PartType.Block
+                                    cBox.Transparency = 0.65; cBox.Material = Enum.Material.ForceField
+                                    cBox.CanCollide = false; cBox.Massless = true; cBox.CFrame = hrp.CFrame; cBox.Parent = hrp
+                                    local weld = Instance.new("WeldConstraint")
+                                    weld.Part0 = cBox; weld.Part1 = hrp; weld.Parent = cBox
+                                end
+                                cBox.Size = Vector3.new(getgenv().HitboxSize, getgenv().HitboxSize, getgenv().HitboxSize)
+                                cBox.Color = rCol
+                            else
+                                local cBox = hrp:FindFirstChild("N_CustomHitbox")
+                                if cBox then cBox:Destroy() end
+                            end
+                        end
+
+                        if getgenv().ESP_Enabled and hum and hum.Health > 0 and hrp and head then
+                            local tagName = "TAG_" .. p.Name
+                            local tag = ESP_Folder:FindFirstChild(tagName) or Instance.new("BillboardGui", ESP_Folder)
+                            tag.Name = tagName; tag.Adornee = head; tag.Size = UDim2.new(0, 200, 0, 50)
+                            tag.StudsOffset = Vector3.new(0, 1.5, 0); tag.AlwaysOnTop = true; tag.MaxDistance = math.huge
+                            
+                            local nameTxt = tag:FindFirstChild("Name") or Instance.new("TextLabel", tag)
+                            nameTxt.Name = "Name"; nameTxt.Size = UDim2.new(1, 0, 1, 0)
+                            nameTxt.BackgroundTransparency = 1; nameTxt.Text = p.Name .. "\n[" .. rName .. "]"
+                            nameTxt.TextColor3 = rCol; nameTxt.Font = Enum.Font.SourceSansBold; nameTxt.TextSize = 14; nameTxt.TextStrokeTransparency = 0.4
+                            
+                            local hl = char:FindFirstChild("N_HL") or Instance.new("Highlight", char)
+                            hl.Name = "N_HL"; hl.FillColor = rCol; hl.OutlineColor = rCol
+                            hl.FillTransparency = 0.8; hl.OutlineTransparency = 0.5; hl.Enabled = true
+                        else
+                            CleanupESP(p)
+                        end
+                    end
+                end
+            end
+        end)
     end
 end)
 
--- [ ระบบความเร็วและวาร์ป & ฟิสิกส์การทะลุ ]
+-- ระบบฟิสิกส์ (ความเร็ว, วาร์ป, ทะลุ)
 RunService.Stepped:Connect(function()
     pcall(function()
         local char = plr.Character
@@ -411,39 +420,30 @@ RunService.Stepped:Connect(function()
         local hum = char:FindFirstChild("Humanoid")
         local myRoot = char:FindFirstChild("HumanoidRootPart")
 
-        -- ปรับความเร็ว
         if hum and hum.WalkSpeed ~= getgenv().WalkSpeed then 
             hum.WalkSpeed = getgenv().WalkSpeed 
         end
         
-        -- เดินทะลุกำแพง (Noclip: ปิดการชนทุกชิ้นส่วน)
         if getgenv().Noclip_Enabled then
             for _, v in pairs(char:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = false
-                end
+                if v:IsA("BasePart") then v.CanCollide = false end
             end
         end
 
-        -- กันคนเดินชน (Anti-Bump)
         if getgenv().AntiBump_Enabled then
             for _, p in pairs(Players:GetPlayers()) do
                 if p ~= plr and p.Character then
                     for _, v in pairs(p.Character:GetDescendants()) do
-                        if v:IsA("BasePart") then
-                            v.CanCollide = false
-                        end
+                        if v:IsA("BasePart") then v.CanCollide = false end
                     end
                 end
             end
         end
 
-        -- โหมดวาร์ปติดตาม
         if getgenv().Follow_Enabled or getgenv().Orbit_Enabled then
             local target = getgenv().Orbit_Target
             if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and myRoot then
                 local tRoot = target.Character.HumanoidRootPart
-                
                 myRoot.Velocity = Vector3.new(0,0,0)
                 if getgenv().Follow_Enabled then
                     myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 4.5, 0)
@@ -456,7 +456,7 @@ RunService.Stepped:Connect(function()
     end)
 end)
 
--- [ ระบบ Magic Bullet / ยิงตรงไหนก็โดน ]
+-- ระบบ Magic Bullet (Metatable Hooking) เสถียรขึ้น
 task.spawn(function()
     pcall(function()
         local mt = getrawmetatable(game)
@@ -464,9 +464,8 @@ task.spawn(function()
         local oldIndex = mt.__index
         setreadonly(mt, false)
 
-        -- Hook เปลี่ยนจุดตกกระทบของเมาส์
         mt.__index = newcclosure(function(t, k)
-            if getgenv().SilentAim_Enabled and t == Mouse and (k == "Hit" or k == "Target") then
+            if getgenv().SilentAim_Enabled and t == Mouse and not checkcaller() then
                 if CurrentPredictedPos and CurrentAimTarget and CurrentAimTarget.Character then
                     if k == "Hit" then return CFrame.new(CurrentPredictedPos) end
                     if k == "Target" then return CurrentAimTarget.Character:FindFirstChild("HumanoidRootPart") end
@@ -475,7 +474,6 @@ task.spawn(function()
             return oldIndex(t, k)
         end)
 
-        -- Hook หักเลี้ยววิถีกระสุน
         mt.__namecall = newcclosure(function(self, ...)
             local method = getnamecallmethod()
             local args = {...}
@@ -497,7 +495,7 @@ task.spawn(function()
     end)
 end)
 
--- [ ระบบดึงปืนอัตโนมัติ ]
+-- ระบบดึงปืนอัตโนมัติ
 task.spawn(function()
     while task.wait(0.1) do
         if getgenv().Auto_BringGun then
@@ -517,7 +515,7 @@ task.spawn(function()
     end
 end)
 
--- [ รีเฟรชรายชื่อใน Dropdown ]
+-- รีเฟรชรายชื่อใน Dropdown
 task.spawn(function()
     while task.wait(5) do
         if getgenv().AutoRefresh_List then
@@ -526,5 +524,4 @@ task.spawn(function()
     end
 end)
 
--- [ ทำความสะอาด ESP เมื่อมีคนออกเกม ]
 Players.PlayerRemoving:Connect(function(p) CleanupESP(p) end)
