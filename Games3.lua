@@ -1,6 +1,6 @@
 -- [[ N-SHINNEN : CUSTOM TURBO & INSTANT BYPASS V15 ]] --
 
-local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/ca3ee71cb4c922c5055bca31b4fa9578/raw/145adea59e4bfc4c4273b7e8b6b925d8969cae49/HIUISHINNEN"))()
+local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/32e74ee7bdbe95243e11eb84f4909c60/raw/f8efa6b99167fe80d5ec93bf36671e0298b12106/UISHINNENHINNEN"))()
 local Win = Library:CreateWindow("🔥 N-SHINNEN V15 TURBO")
 
 local plr = game.Players.LocalPlayer
