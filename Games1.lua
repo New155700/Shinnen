@@ -105,13 +105,12 @@ getgenv().Warp_Target_Name = "Select Player"; getgenv().Attach_Head = false; get
 getgenv().Selected_Tool_To_Lock = "Select Tool"; getgenv().Lock_Tool_Enabled = false; getgenv().Toggle_Tool_Enabled = false
 getgenv().AutoFarmATM_Loop = false
 getgenv().AutoFarmATM_Running = false 
-getgenv().Manual_Zero_Delay = false -- ตัวแปรใหม่สำหรับตั้งค่า E
+getgenv().Manual_Zero_Delay = false
 
 local CurrentAimTarget, CurrentPredictedPos, FlyBodyVelocity = nil, nil, nil
 local MagicPlatform = nil
 local Original_CFrame = nil 
 
--- [ 📌 จุด ATM 13 จุด ดั้งเดิม ]
 local ATM_Locations = {
     CFrame.new(1414.58423, -16.6551094, -1546.9967, 0.965929627, 0, 0.258804798, 0, 1, 0, -0.258804798, 0, 0.965929627),
     CFrame.new(1066.67896, -31.7288399, -1553.45471, -0.965929747, 0, -0.258804798, 0, 1, 0, 0.258804798, 0, -0.965929747),
@@ -135,8 +134,6 @@ local MapLocations = {
     [SelectedLang == "TH" and "🔫 ร้านปืน" or "🔫 Gun Store"] = CFrame.new(-171.59, -30.34, -1262.56),
     [SelectedLang == "TH" and "🏦 ดาดฟ้าธนาคาร" or "🏦 Bank Top"] = CFrame.new(664.56, -7.42, -1258.93),
     [SelectedLang == "TH" and "🦹 ฐานโจร" or "🦹 Criminal Base"] = CFrame.new(370.36, 45.00, -2974.59),
-    [SelectedLang == "TH" and "🛡️ เซฟโซน" or "🛡️ Safe Zone"] = CFrame.new(500, 200, -1000),
-    ["N SHINNEN"] = CFrame.new(268.014252, -31.754837, -925.52948, 0.258864343, -0, -0.965913713, 0, 1, -0, 0.965913713, 0, 0.25886434)
 }
 local Tracers, Highlights, Billboards = {}, {}, {}
 
@@ -145,19 +142,9 @@ local Tracers, Highlights, Billboards = {}, {}, {}
 -- ==========================================
 local function SafeToggle(v) return (type(v) == "boolean" and v) or (type(v) == "table" and v[1] == true) or false end
 local function ShowNotification(t, d) pcall(function() game:GetService("StarterGui"):SetCore("SendNotification", {Title=t, Text=d, Duration=4}) end) end
-
-local function GetPlayerBounty(p)
-    local b = 0; pcall(function() b = (p:FindFirstChild("leaderstats") and p.leaderstats:FindFirstChild("Bounty") and tonumber(p.leaderstats.Bounty.Value)) or (p:FindFirstChild("Bounty") and tonumber(p.Bounty.Value)) or 0 end); return b
-end
-
-local function GetPlayerMoney()
-    local m = 0; pcall(function() m = (plr:FindFirstChild("leaderstats") and plr.leaderstats:FindFirstChild("Cash") and tonumber(plr.leaderstats.Cash.Value)) or (plr:FindFirstChild("leaderstats") and plr.leaderstats:FindFirstChild("Money") and tonumber(plr.leaderstats.Money.Value)) or 0 end); return m
-end
-
-local function GetPlayersList()
-    local t = {}; for _, v in pairs(Players:GetPlayers()) do if v ~= plr then table.insert(t, v.Name) end end; table.sort(t); return t
-end
-
+local function GetPlayerBounty(p) local b = 0; pcall(function() b = (p:FindFirstChild("leaderstats") and p.leaderstats:FindFirstChild("Bounty") and tonumber(p.leaderstats.Bounty.Value)) or (p:FindFirstChild("Bounty") and tonumber(p.Bounty.Value)) or 0 end); return b end
+local function GetPlayerMoney() local m = 0; pcall(function() m = (plr:FindFirstChild("leaderstats") and plr.leaderstats:FindFirstChild("Cash") and tonumber(plr.leaderstats.Cash.Value)) or (plr:FindFirstChild("leaderstats") and plr.leaderstats:FindFirstChild("Money") and tonumber(plr.leaderstats.Money.Value)) or 0 end); return m end
+local function GetPlayersList() local t = {}; for _, v in pairs(Players:GetPlayers()) do if v ~= plr then table.insert(t, v.Name) end end; table.sort(t); return t end
 local function GetInventoryTools()
     local tools = {"Select Tool"}
     if plr.Character then
@@ -172,7 +159,6 @@ local function GetInventoryTools()
     end
     return tools
 end
-
 local function IsVisible(targetChar)
     if not getgenv().WallCheck_Enabled then return true end 
     if not plr.Character or not targetChar then return false end
@@ -181,7 +167,6 @@ local function IsVisible(targetChar)
     local params = RaycastParams.new(); params.FilterDescendantsInstances = {plr.Character, targetChar, workspace:FindFirstChild("Vehicles")}; params.FilterType = Enum.RaycastFilterType.Exclude
     return not workspace:Raycast(Camera.CFrame.Position, tp.Position - Camera.CFrame.Position, params)
 end
-
 local function GetClosestPlayerInFOV()
     local cp, sd = nil, getgenv().FOV_Size
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -200,7 +185,6 @@ local function GetClosestPlayerInFOV()
     end
     return cp
 end
-
 local function GetPlayerColor(p) return p.Team and p.TeamColor.Color or Color3.fromRGB(255, 255, 255) end
 local function GetPredictedPosition(target)
     if not target or not target.Character then return nil end
@@ -208,7 +192,6 @@ local function GetPredictedPosition(target)
     if ap then return ap.Position + ((target.Character.HumanoidRootPart and target.Character.HumanoidRootPart.Velocity or ap.Velocity) * getgenv().Prediction_Factor) end
     return nil
 end
-
 local function DrawLine2D(frame, p1, p2)
     local dist, angle = (p1 - p2).Magnitude, math.deg(math.atan2(p2.Y - p1.Y, p2.X - p1.X))
     frame.Size, frame.Position, frame.Rotation = UDim2.new(0, dist, 0, 2), UDim2.new(0, (p1.X + p2.X) / 2, 0, (p1.Y + p2.Y) / 2), angle
@@ -291,7 +274,7 @@ local function ApplyFPSBoost(state)
 end
 
 -- ==========================================
--- [ 🟢 GUI SETUP (HUD & Auto E) ]
+-- [ 🟢 GUI SETUP (HUD & ปุ่มลอย E ทรงแคปซูล) ]
 -- ==========================================
 local FOV_Gui = CoreGui:FindFirstChild("N_FOV_GUI")
 if FOV_Gui then FOV_Gui:Destroy() end
@@ -310,22 +293,40 @@ local CountText = Instance.new("TextLabel", CountFrame); CountText.Size = UDim2.
 
 local MobileUI = CoreGui:FindFirstChild("N_MobileAutoE")
 if MobileUI then MobileUI:Destroy() end
-MobileUI = Instance.new("ScreenGui", CoreGui); MobileUI.Name = "N_MobileAutoE"; MobileUI.ResetOnSpawn = false
-local E_Button = Instance.new("TextButton", MobileUI); E_Button.Size, E_Button.Position = UDim2.new(0, 70, 0, 70), UDim2.new(0.85, -40, 0.4, 0); E_Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40); E_Button.Text = "⚡\nAuto E\n[OFF]"; E_Button.Font = Enum.Font.GothamBold; E_Button.TextSize = 14; E_Button.TextColor3 = Color3.fromRGB(255, 100, 100); E_Button.Visible = false
-local UICornerBtn = Instance.new("UICorner", E_Button); UICornerBtn.CornerRadius = UDim.new(1, 0)
+MobileUI = Instance.new("ScreenGui", CoreGui)
+MobileUI.Name = "N_MobileAutoE"
+MobileUI.ResetOnSpawn = false
+
+-- สร้างปุ่มทรงแคปซูล
+local CapsuleBtn = Instance.new("TextButton", MobileUI)
+CapsuleBtn.Size = UDim2.new(0, 130, 0, 40)
+CapsuleBtn.Position = UDim2.new(0.8, -65, 0.4, 0)
+CapsuleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+CapsuleBtn.Text = "🖐️ ปิดกด E 0วิ"
+CapsuleBtn.Font = Enum.Font.GothamBold
+CapsuleBtn.TextSize = 14
+CapsuleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CapsuleBtn.Visible = true
+
+local UICornerBtn = Instance.new("UICorner", CapsuleBtn)
+UICornerBtn.CornerRadius = UDim.new(1, 0)
+
+local UIStrokeBtn = Instance.new("UIStroke", CapsuleBtn)
+UIStrokeBtn.Thickness = 2
+UIStrokeBtn.Color = Color3.fromRGB(200, 200, 200)
+
 local dragging, dragStart, startPos
-E_Button.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true; dragStart = input.Position; startPos = E_Button.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end) end
+CapsuleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
+        dragging = true; dragStart = input.Position; startPos = CapsuleBtn.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end) 
+    end
 end)
 UserInputService.InputChanged:Connect(function(input)
     if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
-        local delta = input.Position - dragStart; E_Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        local delta = input.Position - dragStart
+        CapsuleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
-end)
-E_Button.MouseButton1Click:Connect(function()
-    getgenv().AutoE_Enabled = SafeToggle(not getgenv().AutoE_Enabled)
-    E_Button.Text = getgenv().AutoE_Enabled and "⚡\nAuto E\n[ON]" or "⚡\nAuto E\n[OFF]"
-    E_Button.TextColor3 = getgenv().AutoE_Enabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
 end)
 
 -- ==========================================
@@ -356,15 +357,25 @@ local function UpdateSinglePrompt(prompt)
 end
 
 local function UpdateAllPrompts()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        UpdateSinglePrompt(obj)
-    end
+    for _, obj in pairs(workspace:GetDescendants()) do UpdateSinglePrompt(obj) end
 end
 UpdateAllPrompts()
 
-workspace.DescendantAdded:Connect(function(obj)
-    task.wait(0.1)
-    UpdateSinglePrompt(obj)
+workspace.DescendantAdded:Connect(function(obj) task.wait(0.1); UpdateSinglePrompt(obj) end)
+
+-- 🔗 เชื่อมปุ่มลอยกับระบบ
+CapsuleBtn.MouseButton1Click:Connect(function()
+    getgenv().Manual_Zero_Delay = not getgenv().Manual_Zero_Delay
+    if getgenv().Manual_Zero_Delay then
+        CapsuleBtn.Text = "🔥 เปิดกด E 0วิ"
+        CapsuleBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+        UIStrokeBtn.Color = Color3.fromRGB(255, 255, 255)
+    else
+        CapsuleBtn.Text = "🖐️ ปิดกด E 0วิ"
+        CapsuleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        UIStrokeBtn.Color = Color3.fromRGB(200, 200, 200)
+    end
+    UpdateAllPrompts() -- สั่งอัปเดตระบบในเกมทันทีที่กด
 end)
 
 ProximityPromptService.PromptShown:Connect(function(prompt)
@@ -516,9 +527,18 @@ GodSec:CreateToggle(L.GodEn, function(v)
         end
     end
 end)
-GodSec:CreateToggle(L.AutoEBtn, function(v) getgenv().AutoE_Enabled = SafeToggle(v); E_Button.Visible = getgenv().AutoE_Enabled end)
+GodSec:CreateToggle(L.AutoEBtn, function(v) getgenv().AutoE_Enabled = SafeToggle(v) end)
 GodSec:CreateToggle(L.ManualEDelay, function(v) 
     getgenv().Manual_Zero_Delay = SafeToggle(v)
+    if getgenv().Manual_Zero_Delay then
+        CapsuleBtn.Text = "🔥 เปิดกด E 0วิ"
+        CapsuleBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+        UIStrokeBtn.Color = Color3.fromRGB(255, 255, 255)
+    else
+        CapsuleBtn.Text = "🖐️ ปิดกด E 0วิ"
+        CapsuleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        UIStrokeBtn.Color = Color3.fromRGB(200, 200, 200)
+    end
     UpdateAllPrompts()
 end)
 
