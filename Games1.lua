@@ -1,4 +1,4 @@
--- [[ N-SHINNEN V.7 PRO MAX : RIOT CITY (ULTIMATE STABLE + ANTI-AFK + ZERO DELAY) ]] --
+-- [[ N-SHINNEN V.7 PRO MAX : RIOT CITY (ULTIMATE STABLE + ANTI-AFK + ZERO DELAY + MANUAL E TOGGLE) ]] --
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -61,7 +61,7 @@ local T = {
         VisTab = "👁️ มองทะลุ", VisSec = "ระบบมองทะลุ & ESP", EspEn = "เปิด ESP ผู้เล่น", TracerEn = "เปิดเส้นโยง", BountyEn = "แสดงค่าหัว (Bounty) 👑",
         FovSec = "ตั้งค่าเป้าสายตา (FOV)", FovEn = "แสดงวงกลม FOV", FovSize = "ขนาด FOV",
         AimTab = "🔫 ต่อสู้", AimSec = "ระบบเล็ง & Aimbot", AimbotEn = "🎯 Aimbot (ล็อคหัว)", MagicEn = "🎯 Magic Bullet (กระสุนเลี้ยว)", WallCheck = "🚧 เช็คกำแพง (Wall Check)", LockVeh = "🚗 ล็อคคนในรถ", AimSmooth = "ความสมูทกล้อง", Predict = "ค่าดักหน้า (Prediction)",
-        GodSec = "ระดับพระเจ้า (God Tier)", GodEn = "👻 กันดาเมจ 100% (กันเซ็นเซอร์ & เลเซอร์)", AutoEBtn = "⚡ Auto E (ความเร็วแสง)",
+        GodSec = "ระดับพระเจ้า (God Tier)", GodEn = "👻 กันดาเมจ 100% (กันเซ็นเซอร์ & เลเซอร์)", AutoEBtn = "⚡ Auto E (ความเร็วแสง)", ManualEDelay = "🖐️ กด E เองไร้ดีเลย์ (Manual 0s)",
         MoveTab = "🏃 เคลื่อนที่", MoveSec = "ระบบเคลื่อนที่ & บิน", SpeedEn = "⚡ เปิดใช้งานวิ่งไว", SpeedVal = "ความเร็ววิ่ง", NoclipEn = "👻 Noclip ทะลุทุกอย่าง", FlyEn = "🦅 เปิดใช้งานบิน", FlyVal = "ความเร็วบิน",
         TpTab = "🌀 เทเลพอร์ต", BountySec = "💀 นักล่าค่าหัวอัตโนมัติ", MinBounty = "ล่าค่าหัวขั้นต่ำ", MaxBounty = "ล่าค่าหัวสูงสุด",
         ToolDrop = "🎒 เลือกไอเทมที่จะสลับถือ", RefreshTool = "🔄 รีเฟรชไอเทม", LockTool = "🔒 ล็อคถือไอเทมค้าง", ToggleTool = "🔄 ล็อคและสลับถือไอเทม",
@@ -76,7 +76,7 @@ local T = {
         VisTab = "👁️ Visuals", VisSec = "ESP System", EspEn = "Enable Player ESP", TracerEn = "Enable Tracers", BountyEn = "Show Bounty 👑",
         FovSec = "FOV Settings", FovEn = "Show FOV Circle", FovSize = "FOV Size",
         AimTab = "🔫 Combat", AimSec = "Aimbot System", AimbotEn = "🎯 Aimbot", MagicEn = "🎯 Magic Bullet", WallCheck = "🚧 Wall Check", LockVeh = "🚗 Lock Players in Vehicle", AimSmooth = "Aim Smoothness", Predict = "Prediction Factor",
-        GodSec = "God Tier", GodEn = "👻 100% Anti-Damage (Sensor/Laser)", AutoEBtn = "⚡ Auto E (Instant)",
+        GodSec = "God Tier", GodEn = "👻 100% Anti-Damage (Sensor/Laser)", AutoEBtn = "⚡ Auto E (Instant)", ManualEDelay = "🖐️ Manual Zero Delay E",
         MoveTab = "🏃 Movement", MoveSec = "Speed & Fly", SpeedEn = "⚡ Enable Speed", SpeedVal = "Walk Speed", NoclipEn = "👻 Noclip", FlyEn = "🦅 Enable Fly", FlyVal = "Fly Speed",
         TpTab = "🌀 Teleport", BountySec = "💀 Auto Bounty Hunter", MinBounty = "Minimum Bounty", MaxBounty = "Maximum Bounty",
         ToolDrop = "🎒 Select Tool", RefreshTool = "🔄 Refresh Inventory", LockTool = "🔒 Lock Tool (Always Hold)", ToggleTool = "🔄 Toggle Tool Hold",
@@ -105,6 +105,7 @@ getgenv().Warp_Target_Name = "Select Player"; getgenv().Attach_Head = false; get
 getgenv().Selected_Tool_To_Lock = "Select Tool"; getgenv().Lock_Tool_Enabled = false; getgenv().Toggle_Tool_Enabled = false
 getgenv().AutoFarmATM_Loop = false
 getgenv().AutoFarmATM_Running = false 
+getgenv().Manual_Zero_Delay = false -- ตัวแปรใหม่สำหรับตั้งค่า E
 
 local CurrentAimTarget, CurrentPredictedPos, FlyBodyVelocity = nil, nil, nil
 local MagicPlatform = nil
@@ -328,10 +329,45 @@ E_Button.MouseButton1Click:Connect(function()
 end)
 
 -- ==========================================
--- [ ⚡ ZERO DELAY EVENT HANDLER & UPGRADE PROMPT ]
+-- [ ⚡ PROXIMITY PROMPT HANDLER (MANUAL & AUTO) ]
 -- ==========================================
+local Original_Prompts = {}
+
+local function UpdateSinglePrompt(prompt)
+    if not prompt:IsA("ProximityPrompt") then return end
+
+    if not Original_Prompts[prompt] then
+        Original_Prompts[prompt] = {
+            HoldDuration = prompt.HoldDuration,
+            RequiresLineOfSight = prompt.RequiresLineOfSight,
+            MaxActivationDistance = prompt.MaxActivationDistance
+        }
+    end
+
+    if getgenv().Manual_Zero_Delay then
+        prompt.HoldDuration = 0
+        prompt.RequiresLineOfSight = false
+        prompt.MaxActivationDistance = Original_Prompts[prompt].MaxActivationDistance + 10
+    else
+        prompt.HoldDuration = Original_Prompts[prompt].HoldDuration
+        prompt.RequiresLineOfSight = Original_Prompts[prompt].RequiresLineOfSight
+        prompt.MaxActivationDistance = Original_Prompts[prompt].MaxActivationDistance
+    end
+end
+
+local function UpdateAllPrompts()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        UpdateSinglePrompt(obj)
+    end
+end
+UpdateAllPrompts()
+
+workspace.DescendantAdded:Connect(function(obj)
+    task.wait(0.1)
+    UpdateSinglePrompt(obj)
+end)
+
 ProximityPromptService.PromptShown:Connect(function(prompt)
-    prompt.HoldDuration = 0; prompt.RequiresLineOfSight = false 
     local act = prompt.ActionText:lower()
     local obj = prompt.ObjectText:lower()
 
@@ -356,17 +392,6 @@ ProximityPromptService.PromptShown:Connect(function(prompt)
         end
     end
 end)
-
-local function UpgradePrompt(prompt)
-    if prompt:IsA("ProximityPrompt") then 
-        prompt.HoldDuration = 0
-        prompt.RequiresLineOfSight = false 
-        -- เพิ่มระยะเห็นและระยะกดจากเดิมอีก 10 หน่วย
-        prompt.MaxActivationDistance = prompt.MaxActivationDistance + 10
-    end
-end
-for _, obj in pairs(workspace:GetDescendants()) do UpgradePrompt(obj) end
-workspace.DescendantAdded:Connect(UpgradePrompt)
 
 -- ==========================================
 -- [ 🏦 ACTIVE ATM FARMING LOGIC ]
@@ -492,6 +517,10 @@ GodSec:CreateToggle(L.GodEn, function(v)
     end
 end)
 GodSec:CreateToggle(L.AutoEBtn, function(v) getgenv().AutoE_Enabled = SafeToggle(v); E_Button.Visible = getgenv().AutoE_Enabled end)
+GodSec:CreateToggle(L.ManualEDelay, function(v) 
+    getgenv().Manual_Zero_Delay = SafeToggle(v)
+    UpdateAllPrompts()
+end)
 
 local MoveTab = Win:CreateTab(L.MoveTab)
 local SpeedSec = MoveTab:CreateSection(L.MoveSec)
