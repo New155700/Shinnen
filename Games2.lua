@@ -495,19 +495,37 @@ task.spawn(function()
     end)
 end)
 
--- ระบบดึงปืนอัตโนมัติ
+-- ==========================================
+-- ระบบดึงปืนอัตโนมัติ (แก้ไขเพื่อดึง GunDrop0 มาหาตัว)
+-- ==========================================
 task.spawn(function()
     while task.wait(0.1) do
         if getgenv().Auto_BringGun then
             pcall(function()
-                local gun = workspace:FindFirstChild("GunDrop")
+                -- ค้นหา object ที่ชื่อ "GunDrop0" หรือ "GunDrop" 
+                local gun = workspace:FindFirstChild("GunDrop0") or workspace:FindFirstChild("GunDrop")
                 local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                
                 if gun and hrp then 
-                    if firetouchinterest then
-                        firetouchinterest(hrp, gun, 0)
-                        firetouchinterest(hrp, gun, 1)
-                    else
-                        gun.CFrame = hrp.CFrame
+                    -- รองรับกรณีที่ปืนเป็น Model หรือเป็น Part เดี่ยวๆ
+                    local targetPart = gun:IsA("Model") and (gun.PrimaryPart or gun:FindFirstChild("Handle")) or gun
+                    
+                    -- ค่า CFrame อ้างอิง
+                    local originalDropCFrame = CFrame.new(
+                        -3.28272009, 287.83728, 8972.76465, 
+                        0.993359864, -0, -0.115048453, 
+                        0, 1, -0, 
+                        0.115048453, 0, 0.993359864
+                    )
+
+                    if targetPart then
+                        if firetouchinterest then
+                            firetouchinterest(hrp, targetPart, 0)
+                            task.wait(0.01)
+                            firetouchinterest(hrp, targetPart, 1)
+                        else
+                            targetPart.CFrame = hrp.CFrame
+                        end
                     end
                 end
             end)
