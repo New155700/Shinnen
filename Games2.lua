@@ -187,8 +187,17 @@ local function CleanupESP(p)
         if p.Character then
             local hrp = p.Character:FindFirstChild("HumanoidRootPart")
             if p.Character:FindFirstChild("N_HL") then p.Character.N_HL:Destroy() end
-            local cBox = hrp and hrp:FindFirstChild("N_CustomHitbox")
+            
+            -- ลบ Hitbox ของผู้เล่นที่ตายหรือปิด
+            local cBox = p.Character:FindFirstChild("N_CustomHitbox")
             if cBox then cBox:Destroy() end
+            
+            -- คืนขนาด HRP ดั้งเดิมกรณีเคยไปแก้ไว้ก่อนหน้านี้
+            if hrp and hrp.Size.X > 3 then
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 1
+            end
+            
             if hrp and hrp:FindFirstChild("N_Tracer") then hrp.N_Tracer:Destroy() end
         end
         if Tracers[p] then
@@ -200,7 +209,7 @@ local function CleanupESP(p)
 end
 
 -- ==========================================
--- [ ส่วนของเมนู GUI ]
+-- [ ส่วนของเมนู GUI (เหมือนเดิม 100%) ]
 -- ==========================================
 local VisualTab = Win:CreateTab("👁️ ESP & Visuals")
 local EspSec = VisualTab:CreateSection("ระบบมองทะลุ & หน้าจอ")
@@ -235,7 +244,6 @@ MoveSec:CreateSlider("ความเร็วเดิน", 16, 150, 16, functi
 MoveSec:CreateToggle("กันคนเดินชน (Anti-Bump)", function(v) getgenv().AntiBump_Enabled = SafeToggle(v) end)
 MoveSec:CreateToggle("เดินทะลุกำแพง (Noclip)", function(v) getgenv().Noclip_Enabled = SafeToggle(v) end)
 
--- [ เพิ่มปุ่มวาร์ปและรีเซ็ต ]
 local WarpSec = MoveTab:CreateSection("🌀 ระบบวาร์ป (ตามเป้าหมายที่เลือก)")
 WarpSec:CreateToggle("Head TP (เกาะบนหัวเป้าหมาย)", function(v) getgenv().Follow_Enabled = SafeToggle(v) end)
 WarpSec:CreateToggle("Orbit Mode (หมุนรอบตัวเป้าหมาย)", function(v) getgenv().Orbit_Enabled = SafeToggle(v) end)
@@ -245,7 +253,6 @@ WarpSec:CreateButton("⚡ วาร์ปไปหาเป้าหมายท
         local target = getgenv().Orbit_Target
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                -- วาร์ปไปด้านหลังเป้าหมาย 3 Studs
                 plr.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
             end
         end
@@ -343,9 +350,9 @@ RunService:BindToRenderStep("N_Aimbot_Render", Enum.RenderPriority.Camera.Value 
     end)
 end)
 
--- ระบบวาด ESP, อัปเดตจำนวนคน และ Hitbox
+-- ระบบวาด ESP, อัปเดตจำนวนคน และ Hitbox (แบบแก้ไขล่าสุด ไม่ยืนนิ่ง 100%)
 task.spawn(function()
-    while task.wait(0.2) do -- ปรับเป็น 0.2 ลดการทำงานซ้ำซ้อน
+    while task.wait(0.2) do
         pcall(function()
             if PlayerCountTxt then
                 PlayerCountTxt.Text = "ผู้เล่นทั้งหมด: " .. #Players:GetPlayers() .. " คน"
@@ -370,20 +377,33 @@ task.spawn(function()
                         if hrp then
                             if hrp:FindFirstChild("N_Tracer") then hrp.N_Tracer:Destroy() end
 
-                            if getgenv().HITBOX_CUSTOM then
-                                local cBox = hrp:FindFirstChild("N_CustomHitbox")
+                            -- ระบบ Hitbox แก้ใหม่: ใช้สร้างชิ้นส่วนดัมมี่ล่องหนติดกับตัว ไม่ยุ่งกับ HRP ดั้งเดิม
+                            if getgenv().HITBOX_CUSTOM and hum and hum.Health > 0 then
+                                local cBox = char:FindFirstChild("N_CustomHitbox")
                                 if not cBox then
                                     cBox = Instance.new("Part")
-                                    cBox.Name = "N_CustomHitbox"; cBox.Shape = Enum.PartType.Block
-                                    cBox.Transparency = 0.65; cBox.Material = Enum.Material.ForceField
-                                    cBox.CanCollide = false; cBox.Massless = true; cBox.CFrame = hrp.CFrame; cBox.Parent = hrp
+                                    cBox.Name = "N_CustomHitbox"
+                                    cBox.Shape = Enum.PartType.Block
+                                    cBox.Transparency = 1 -- ล่องหน 100% ดูเป็นธรรมชาติ
+                                    cBox.CanCollide = false -- ไม่ให้ชิ้นส่วนนี้ไปชนกับแมพ
+                                    cBox.Massless = true -- ไม่มีน้ำหนัก ผู้เล่นอื่นจะเดินวิ่งปกติ
+                                    cBox.Anchored = false
+                                    cBox.CFrame = hrp.CFrame
+                                    cBox.Parent = char -- ให้ดาเมจเข้าตัวละครได้
+
                                     local weld = Instance.new("WeldConstraint")
-                                    weld.Part0 = cBox; weld.Part1 = hrp; weld.Parent = cBox
+                                    weld.Part0 = hrp
+                                    weld.Part1 = cBox
+                                    weld.Parent = cBox
                                 end
                                 cBox.Size = Vector3.new(getgenv().HitboxSize, getgenv().HitboxSize, getgenv().HitboxSize)
-                                cBox.Color = rCol
+
+                                -- คืนค่า HRP ปกติกรณีเคยไปปรับไว้
+                                if hrp.Size.X > 3 then
+                                    hrp.Size = Vector3.new(2, 2, 1)
+                                end
                             else
-                                local cBox = hrp:FindFirstChild("N_CustomHitbox")
+                                local cBox = char:FindFirstChild("N_CustomHitbox")
                                 if cBox then cBox:Destroy() end
                             end
                         end
@@ -403,7 +423,9 @@ task.spawn(function()
                             hl.Name = "N_HL"; hl.FillColor = rCol; hl.OutlineColor = rCol
                             hl.FillTransparency = 0.8; hl.OutlineTransparency = 0.5; hl.Enabled = true
                         else
-                            CleanupESP(p)
+                            local tag = ESP_Folder:FindFirstChild("TAG_" .. p.Name)
+                            if tag then tag:Destroy() end
+                            if char:FindFirstChild("N_HL") then char.N_HL:Destroy() end
                         end
                     end
                 end
@@ -436,6 +458,16 @@ RunService.Stepped:Connect(function()
                     for _, v in pairs(p.Character:GetDescendants()) do
                         if v:IsA("BasePart") then v.CanCollide = false end
                     end
+                end
+            end
+        end
+
+        -- บังคับปิดชนของกล่อง Hitbox ตลอดเวลาในลูปฟิสิกส์ ป้องกันการเด้งหรือยืนนิ่ง
+        if getgenv().HITBOX_CUSTOM then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= plr and p.Character then
+                    local cBox = p.Character:FindFirstChild("N_CustomHitbox")
+                    if cBox then cBox.CanCollide = false end
                 end
             end
         end
@@ -496,34 +528,27 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- ระบบดึงปืนอัตโนมัติ (แก้ไขเพื่อดึง GunDrop0 มาหาตัว)
+-- ระบบดึงปืนอัตโนมัติ (สแกนหาทั้งแมพ)
 -- ==========================================
 task.spawn(function()
     while task.wait(0.1) do
         if getgenv().Auto_BringGun then
             pcall(function()
-                -- ค้นหา object ที่ชื่อ "GunDrop0" หรือ "GunDrop" 
-                local gun = workspace:FindFirstChild("GunDrop0") or workspace:FindFirstChild("GunDrop")
                 local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
                 
-                if gun and hrp then 
-                    -- รองรับกรณีที่ปืนเป็น Model หรือเป็น Part เดี่ยวๆ
-                    local targetPart = gun:IsA("Model") and (gun.PrimaryPart or gun:FindFirstChild("Handle")) or gun
-                    
-                    -- ค่า CFrame อ้างอิง
-                    local originalDropCFrame = CFrame.new(
-                        -3.28272009, 287.83728, 8972.76465, 
-                        0.993359864, -0, -0.115048453, 
-                        0, 1, -0, 
-                        0.115048453, 0, 0.993359864
-                    )
-
-                    if targetPart then
-                        if firetouchinterest then
-                            firetouchinterest(hrp, targetPart, 0)
-                            task.wait(0.01)
-                            firetouchinterest(hrp, targetPart, 1)
-                        else
+                -- ใช้ GetDescendants เพื่อเจาะหาทุกที่ในโฟลเดอร์ของแมพ
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj.Name == "GunDrop" or obj.Name == "GunDrop0" then
+                        local targetPart = obj:IsA("BasePart") and obj or obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")
+                        
+                        if targetPart then
+                            if firetouchinterest then
+                                firetouchinterest(hrp, targetPart, 0)
+                                task.wait(0.01)
+                                firetouchinterest(hrp, targetPart, 1)
+                            end
+                            -- วาร์ปปืนมาที่ตัวเผื่อคำสั่งด้านบนไม่ติด
                             targetPart.CFrame = hrp.CFrame
                         end
                     end
