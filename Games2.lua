@@ -1,5 +1,5 @@
 local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/e189d2483e64c65cd839242866f13794/raw/045d47196a99aa38fa9d1df67e5d907bc98e0f6d/HIUISHINNEN"))()
-local Win = Library:CreateWindow("🔥 N-SHINNEN ")
+local Win = Library:CreateWindow("🔥 กระตูน ")
 
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
