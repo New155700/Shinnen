@@ -238,6 +238,7 @@ local function CreateKeySystem()
                 Body = HttpService:JSONEncode({
                     input_key = inputKey,
                     input_game_id = tostring(currentId)
+                    hwid = game:GetService("RbxAnalyticsService"):GetClientId()
                 })
             })
         end)
