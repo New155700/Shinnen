@@ -26,7 +26,7 @@ local MapConfig = {
     [14469379009]     = "Games3.lua",
 }
 
--- [ 🛡️ WATCHDOG SYSTEM: ตรวจสอบสถานะทุก 10 วินาที ]
+-- [ 🛡️ WATCHDOG SYSTEM ]
 local function StartWatchdog(key)
     task.spawn(function()
         while true do
@@ -38,7 +38,7 @@ local function StartWatchdog(key)
                         Url = CHECK_STATUS_URL,
                         Method = "POST",
                         Headers = { ["Content-Type"] = "application/json" },
-                        Body = HttpService:JSONEncode({key = key}) -- ตรงกับที่ Python รับ
+                        Body = HttpService:JSONEncode({key = key}) 
                     })
                 end)
                 
@@ -247,7 +247,7 @@ local function CreateKeySystem()
             return
         end
 
-        -- ส่งค่าให้ตรงกับ Python: ใช้ "key" และ "game_id"
+        -- [แก้ไขจุดนี้] ส่งค่าให้ตรงกับ Python Server (ใช้ 'key' และ 'game_id')
         local success, res = pcall(function()
             return req({
                 Url = API_URL,
