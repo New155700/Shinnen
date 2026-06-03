@@ -9,7 +9,7 @@ local currentId = game.PlaceId
 -- [ ⚙️ CONFIGURATION ]
 -- ==========================================
 -- ส่งสัญญาณผ่านระบบ Cloudflare Tunnel ตรงเข้าแอป Termux บนมือถือของคุณ
-local API_URL = "https://nnshop.online/api/verify" 
+local API_URL = "https://nnshopth.online/api/verify" 
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 -- [ 📋 ตารางแมพ (ล็อค ID ให้ตรงไฟล์) ]
