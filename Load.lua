@@ -1,4 +1,4 @@
--- [[ 🔥 SHINNEN HUB | MASTER LOADER V7 PRO + KEY SYSTEM ]] --
+-- [[ 🔥 SHINNEN HUB | MASTER LOADER V7 PRO + CLOUDFLARE TUNNEL ]] --
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
@@ -8,20 +8,18 @@ local currentId = game.PlaceId
 -- ==========================================
 -- [ ⚙️ CONFIGURATION ]
 -- ==========================================
--- ⚠️ เปลี่ยน URL ด้านล่างเป็น URL เว็บของคุณที่รัน Flask อยู่ (ชี้ไปที่ Route ที่ใช้ตรวจสอบคีย์)
-local API_URL = "http://nnshop.online:5000/api/verify" 
+-- ใช้โดเมนของคุณส่งผ่านระบบ Cloudflare Tunnel ตรงเข้ามือถือ
+local API_URL = "https://nnshop.online/api/verify" 
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
--- [ 📋 ตารางแมพ (ล็อค ID ให้ตรงไฟล์) ]
+-- [ 📋 ตารางแมพ ]
 local MapConfig = {
     [113745337705295] = "Games1.lua", -- ID แมพตำรวจจับโจร
     [142823291]       = "Games2.lua", -- ID แมพ Murder Mystery 2
     [14469379009]     = "Games3.lua", -- ID แมพแข่งกันกินอาหารเป็นทีม
 }
 
--- ==========================================
 -- [ 🧹 CLEAR OLD UI ]
--- ==========================================
 pcall(function()
     local targetGui = (gethui and gethui()) or CoreGui
     for _, v in pairs(targetGui:GetChildren()) do
@@ -31,47 +29,35 @@ pcall(function()
     end
 end)
 
--- ตรวจสอบว่าแมพนี้รองรับหรือไม่
 local fileName = MapConfig[currentId]
 if not fileName then
     plr:Kick("🚨 [SECURITY]: แมพนี้ไม่ได้รับอนุญาต!\n\nโปรดนำ ID แมพนี้ไปเพิ่มใน MapConfig: " .. tostring(currentId))
     return
 end
 
--- ==========================================
--- [ 🚀 FUNCTION: โหลดสคริปต์จาก GITHUB ]
--- ==========================================
+-- [ 🚀 FUNCTION: LOAD SCRIPT FROM GITHUB ]
 local function LoadMainScript()
     local fetchUrl = baseUrl .. fileName .. "?t=" .. tostring(tick())
-    
-    local success, content = pcall(function() 
-        return game:HttpGet(fetchUrl) 
-    end)
+    local success, content = pcall(function() return game:HttpGet(fetchUrl) end)
 
     if success and content and content ~= "" then
         if content:match("404: Not Found") then
-            plr:Kick("🚨 [ERROR]: ไม่พบไฟล์ " .. fileName .. " ใน GitHub (404 Not Found)")
+            plr:Kick("🚨 [ERROR]: ไม่พบไฟล์ " .. fileName .. " ใน GitHub")
             return
         end
-
         local func, err = loadstring(content)
         if func then
-            print("✅ [SHINNEN PRO]: ยืนยันคีย์สำเร็จ! กำลังรัน -> " .. fileName)
-            local runSuccess, runErr = pcall(func)
-            if not runSuccess then
-                warn("🚨 [RUNTIME ERROR]: โค้ดในไฟล์ " .. fileName .. " มีปัญหาตอนทำงาน: " .. tostring(runErr))
-            end
+            print("✅ [SHINNEN PRO]: ดึงข้อมูลสำเร็จ! กำลังรัน -> " .. fileName)
+            pcall(func)
         else
-            plr:Kick("🚨 [SYNTAX ERROR]: โค้ดใน " .. fileName .. " มีจุดพิมพ์ผิด\n\n" .. tostring(err))
+            plr:Kick("🚨 [SYNTAX ERROR]: โค้ดพิมพ์ผิด\n\n" .. tostring(err))
         end
     else
-        plr:Kick("🚨 [HTTP ERROR]: ไม่สามารถเชื่อมต่อ GitHub ได้ ลองเช็คเน็ตหรือลิงก์ดูครับ")
+        plr:Kick("🚨 [HTTP ERROR]: เชื่อมต่อ GitHub ล้มเหลว")
     end
 end
 
--- ==========================================
--- [ 🔑 KEY SYSTEM UI & VERIFICATION ]
--- ==========================================
+-- [ 🔑 KEY SYSTEM UI & TUNNEL VERIFICATION ]
 local function CreateKeySystem()
     local KeyUI = Instance.new("ScreenGui")
     KeyUI.Name = "ShinnenKeyUI"
@@ -98,7 +84,6 @@ local function CreateKeySystem()
     KeyBox.Size = UDim2.new(0.8, 0, 0, 40)
     KeyBox.Position = UDim2.new(0.1, 0, 0.28, 0)
     KeyBox.PlaceholderText = "Paste your key here..."
-    KeyBox.Text = ""
     KeyBox.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
     KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     KeyBox.Font = Enum.Font.Gotham
@@ -110,7 +95,7 @@ local function CreateKeySystem()
     VerifyBtn.Size = UDim2.new(0.8, 0, 0, 40)
     VerifyBtn.Position = UDim2.new(0.1, 0, 0.55, 0)
     VerifyBtn.Text = "Verify Key"
-    VerifyBtn.BackgroundColor3 = Color3.fromRGB(139, 92, 246) -- สีม่วงเดียวกับ Admin Panel
+    VerifyBtn.BackgroundColor3 = Color3.fromRGB(139, 92, 246)
     VerifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     VerifyBtn.Font = Enum.Font.GothamBold
     VerifyBtn.TextSize = 15
@@ -127,7 +112,6 @@ local function CreateKeySystem()
     StatusText.TextSize = 12
     StatusText.Parent = MainFrame
 
-    -- ระบบตรวจสอบคีย์เมื่อกดปุ่ม
     VerifyBtn.MouseButton1Click:Connect(function()
         local inputKey = KeyBox.Text
         if inputKey == "" then
@@ -137,28 +121,22 @@ local function CreateKeySystem()
 
         VerifyBtn.Text = "Checking..."
         StatusText.TextColor3 = Color3.fromRGB(150, 150, 150)
-        StatusText.Text = "กำลังตรวจสอบข้อมูลกับเซิร์ฟเวอร์..."
+        StatusText.Text = "กำลังส่งสัญญาณไปที่มือถือหลังบ้าน..."
 
         local req = (syn and syn.request) or (http and http.request) or request or http_request
         if not req then
-            StatusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-            StatusText.Text = "❌ Executor ของคุณไม่รองรับ HTTP Request"
+            StatusText.Text = "❌ Executor ไม่รองรับ HTTP Request"
             VerifyBtn.Text = "Verify Key"
             return
         end
 
-        -- ส่ง Request ไปที่ Flask Python ของคุณ
+        -- ปรับรูปแบบการยิงให้อ่านค่าผ่านคำสั่งดึงแบบคำขอของโค้ดคุณ (GET/POST URL Args)
+        local targetUrl = API_URL .. "?key=" .. HttpService:UrlEncode(inputKey) .. "&gameId=" .. HttpService:UrlEncode(tostring(currentId)) .. "&hwid=NO_HWID"
+
         local success, res = pcall(function()
             return req({
-                Url = API_URL,
-                Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json"
-                },
-                Body = HttpService:JSONEncode({
-                    input_key = inputKey,
-                    input_game_id = tostring(currentId)
-                })
+                Url = targetUrl,
+                Method = "GET" -- เปลี่ยนมาใช้สไตล์ตามหลักสคริปต์ของแอดมินเป๊ะๆ
             })
         end)
 
@@ -170,27 +148,24 @@ local function CreateKeySystem()
             if successDecode and type(resData) == "table" then
                 if resData.status == "success" then
                     StatusText.TextColor3 = Color3.fromRGB(100, 255, 100)
-                    StatusText.Text = "✅ " .. (resData.message or "ยืนยันสำเร็จ! กำลังโหลดสคริปต์...")
+                    StatusText.Text = "✅ ยืนยันสำเร็จ! กำลังโหลดสคริปต์..."
                     task.wait(1)
                     KeyUI:Destroy()
-                    LoadMainScript() -- ดึงไฟล์จาก Github เมื่อคีย์ถูก
+                    LoadMainScript()
                 else
                     StatusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-                    StatusText.Text = "❌ " .. (resData.message or "คีย์ไม่ถูกต้องหรือหมดอายุ")
+                    StatusText.Text = "❌ " .. (resData.message or "คีย์ไม่ถูกต้อง")
                     VerifyBtn.Text = "Verify Key"
                 end
             else
-                StatusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-                StatusText.Text = "❌ เซิร์ฟเวอร์ตอบกลับข้อมูลผิดพลาด"
+                StatusText.Text = "❌ เซิร์ฟเวอร์ตอบกลับผิดพลาด"
                 VerifyBtn.Text = "Verify Key"
             end
         else
-            StatusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-            StatusText.Text = "❌ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้"
+            StatusText.Text = "❌ ไม่สามารถติดต่อเซิร์ฟเวอร์โดเมนได้"
             VerifyBtn.Text = "Verify Key"
         end
     end)
 end
 
--- เรียกใช้ระบบกุญแจ
 CreateKeySystem()
