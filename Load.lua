@@ -236,8 +236,8 @@ local function CreateKeySystem()
                 Method = "POST",
                 Headers = { ["Content-Type"] = "application/json" },
                 Body = HttpService:JSONEncode({
-                    key = inputKey,
-                    game_id = tostring(currentId)
+                    input_key = inputKey,
+                    input_game_id = tostring(currentId)
                 })
             })
         end)
