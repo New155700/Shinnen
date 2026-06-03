@@ -9,7 +9,7 @@ local currentId = game.PlaceId
 -- [ ⚙️ CONFIGURATION ]
 -- ==========================================
 -- ⚠️ เปลี่ยน URL ด้านล่างเป็น URL เว็บของคุณที่รัน Flask อยู่ (ชี้ไปที่ Route ที่ใช้ตรวจสอบคีย์)
-local API_URL = "https://nnshop.online/api/verify" 
+local API_URL = "http://nnshop.online:5000/api/verify" 
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 -- [ 📋 ตารางแมพ (ล็อค ID ให้ตรงไฟล์) ]
