@@ -11,7 +11,7 @@ local currentId = game.PlaceId
 -- [ ⚙️ CONFIGURATION & SOUND SETTINGS ]
 -- ==========================================
 local API_URL = "https://nnshopth.online/api/verify" 
-local CHECK_STATUS_URL = "https://nnshopth.online/api/check_status" -- API สำหรับเช็คสถานะทุก 10 วิ
+local CHECK_STATUS_URL = "https://nnshopth.online/api/check_status" 
 local baseUrl = "https://raw.githubusercontent.com/New155700/Shinnen/main/"
 
 local SoundSettings = {
@@ -30,7 +30,7 @@ local MapConfig = {
 local function StartWatchdog(key)
     task.spawn(function()
         while true do
-            task.wait(10) -- เช็คทุก 10 วินาทีตามที่พี่ต้องการ
+            task.wait(10)
             local req = (syn and syn.request) or (http and http.request) or request or http_request
             if req then
                 local success, res = pcall(function()
@@ -38,7 +38,7 @@ local function StartWatchdog(key)
                         Url = CHECK_STATUS_URL,
                         Method = "POST",
                         Headers = { ["Content-Type"] = "application/json" },
-                        Body = HttpService:JSONEncode({key = key})
+                        Body = HttpService:JSONEncode({key = key}) -- ตรงกับที่ Python รับ
                     })
                 end)
                 
@@ -223,8 +223,11 @@ local function CreateKeySystem()
 
     VerifyBtn.MouseButton1Click:Connect(function()
         PlaySound(4739564027, SoundSettings.VolumeClick)
-        local inputKey = KeyBox.Text
-        if inputKey == "" then
+        
+        -- ล้างค่าช่องว่างเผื่อก๊อปมาติด
+        local finalKey = string.gsub(KeyBox.Text, "%s+", "")
+        
+        if finalKey == "" then
             StatusText.TextColor3 = Color3.fromRGB(255, 100, 100)
             StatusText.Text = "⚠️ กรุณาใส่คีย์ก่อน!"
             MainStroke.Color = Color3.fromRGB(255, 100, 100)
@@ -240,20 +243,19 @@ local function CreateKeySystem()
 
         local req = (syn and syn.request) or (http and http.request) or request or http_request
         if not req then
-            StatusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-            StatusText.Text = "❌ Executor ไม่รองรับ HTTP"
-            VerifyBtn.Text = "VERIFY KEY"
+            StatusText.Text = "❌ Executor ไม่รองรับ"
             return
         end
 
+        -- ส่งค่าให้ตรงกับ Python: ใช้ "key" และ "game_id"
         local success, res = pcall(function()
             return req({
                 Url = API_URL,
                 Method = "POST",
                 Headers = { ["Content-Type"] = "application/json" },
                 Body = HttpService:JSONEncode({
-                    input_key = inputKey,
-                    input_game_id = tostring(currentId), -- เพิ่มคอมม่าที่หายไปตรงนี้ครับ
+                    key = finalKey, 
+                    game_id = tostring(currentId), 
                     hwid = game:GetService("RbxAnalyticsService"):GetClientId()
                 })
             })
@@ -275,7 +277,7 @@ local function CreateKeySystem()
                 closeTween.Completed:Wait()
                 
                 KeyUI:Destroy()
-                StartWatchdog(inputKey) -- 🚀 เริ่มระบบเฝ้าระวัง
+                StartWatchdog(finalKey)
                 LoadMainScript()
             else
                 PlaySound(2868333334, SoundSettings.VolumeClose)
