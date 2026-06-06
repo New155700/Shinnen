@@ -92,7 +92,7 @@ local L = T[SelectedLang]
 -- ==========================================
 -- [ 🛠️ CORE GLOBALS & LIBRARY ]
 -- ==========================================
-local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/811f7c71ef693e1f24ee0c70fb29c22c/raw/70313c252bac0060c271a5a79a19f25f6ac32639/gistfile1"))()
+local Library = loadstring(game:HttpGet("https://gist.githubusercontent.com/New155700/5a44824bb8b6068b295a90c7910555d2/raw/280deb46658c0ca2e2e3fb3f11c2e764194a633c/gistfile1.txt"))()
 local Win = Library:CreateWindow(L.Title)
 
 -- Variables
